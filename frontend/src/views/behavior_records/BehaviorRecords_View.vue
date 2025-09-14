@@ -1,7 +1,5 @@
 <template>
   <div>
-    <!-- App Bar ด้านบน -->
-    <AppBar @toggle-drawer="drawer = !drawer" />
     <v-main>
       <v-container>
         <!-- ปุ่มควบคุม -->
@@ -11,12 +9,12 @@
               <v-icon start>mdi-arrow-left</v-icon> กลับ
             </v-btn>
           </v-col>
-          <v-col cols="auto" class="pa-0 ml-3">
+          <!-- <v-col cols="auto" class="pa-0 ml-3">
             <v-btn color="success" @click="scanQR">
               <v-icon start>mdi-qrcode-scan</v-icon>
               Scan QR Code
             </v-btn>
-          </v-col>
+          </v-col> -->
         </v-row>
 
         <div style="height: 24px"></div>
@@ -444,23 +442,20 @@
 import { ref, computed, onMounted } from "vue";
 import { useRouter } from "vue-router";
 import axios from "@/utils/axios";
-import AppBar from "@/views/appbar/AppBar.vue";
 import { API_BASE_URL } from "@/assets/config";
 
 // Router
 const router = useRouter();
 
 // UI
-const drawer = ref(true);
 const dialog = ref(false);
 const isEditing = ref(false);
 const search = ref("");
-
 const currentDateFormatted = ref("");
 
 // Data
 const behaviorRecords = ref([]);
-const teacherId = ref("6"); // TODO
+const teacherId = ref("5"); // TODO
 const completed = ref("บันทึกพฤติกรรมแล้ว");
 
 // Snackbar แจ้งเตือนสถานะ
@@ -534,22 +529,26 @@ const formatThaiDate = (date) => {
 const fetchStudentBehaviorRecords = async () => {
   try {
     const token = localStorage.getItem("access_token");
+
+
     const response = await axios.get(
       `${API_BASE_URL}/student_behavior_records/${teacherId.value}`,
       {
         headers: { Authorization: `Bearer ${token}` },
       }
     );
-    console.log("fetchStudentBehaviorRecords:", response.data);
+
+    // console.log("fetchStudentBehaviorRecords:", response.data);
+
     behaviorRecords.value = response.data.behavior_records || [];
   } catch (error) {
     console.error("โหลดข้อมูลนักเรียนล้มเหลว", error);
   }
 };
 
-const scanQR = () => {
-  console.log("Scan QR Code");
-};
+// const scanQR = () => {
+//   console.log("Scan QR Code");
+// };
 
 const addBehavior = (behaviorReacord) => {
   if (behaviorReacord.behavior_id) {
@@ -647,10 +646,17 @@ const save = async () => {
 
 onMounted(() => {
   const token = localStorage.getItem("access_token");
-  if (!token) {
+  const expiresAt = localStorage.getItem("expiresAt") 
+
+  // console.log("access_token: ", token);
+  // console.log("expiresAt: ", expiresAt);
+
+  //ถ้า ไม่มีทั้ง token และเวลาหมดอายุ → แสดงว่า user ยังไม่ได้ login หรือ token ถูกลบไปแล้ว
+  if (!token && !expiresAt) {
     router.push("/login");
-    return;
+    return; // หยุดการทำงานตรงนี้
   }
+  //---- โค้ดด้านล่างจะไม่ทำงานถ้าไม่มี token && expiresAt ----
 
   fetchStudentBehaviorRecords();
 

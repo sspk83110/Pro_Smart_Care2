@@ -1,7 +1,5 @@
 <template>
   <div>
-    <!-- App Bar ด้านบน -->
-    <AppBar @toggle-drawer="drawer = !drawer" />
     <v-main>
       <v-container>
         <!-- ปุ่มควบคุม -->
@@ -11,12 +9,12 @@
               <v-icon start>mdi-arrow-left</v-icon> กลับ
             </v-btn>
           </v-col>
-          <v-col cols="auto" class="pa-0 ml-3">
+          <!-- <v-col cols="auto" class="pa-0 ml-3">
             <v-btn color="success" @click="scanQR">
               <v-icon start>mdi-qrcode-scan</v-icon>
               Scan QR Code
             </v-btn>
-          </v-col>
+          </v-col> -->
         </v-row>
 
         <div style="height: 24px"></div>
@@ -519,14 +517,12 @@
 import { ref, computed, onMounted } from "vue";
 import { useRouter } from "vue-router";
 import axios from "@/utils/axios";
-import AppBar from "@/views/appbar/AppBar.vue";
 import { API_BASE_URL } from "@/assets/config";
 
 // Router
 const router = useRouter();
 
 // UI
-const drawer = ref(true);
 const dialog = ref(false);
 const isEditing = ref(false);
 const search = ref("");
@@ -535,7 +531,7 @@ const currentDateFormatted = ref("");
 
 // Data
 const healthRecords = ref([]);
-const teacherId = ref("6"); // TODO
+const teacherId = ref("5"); // TODO
 
 // Snackbar แจ้งเตือนสถานะ
 const snackbar = ref({
@@ -655,16 +651,18 @@ const fetchStudentHealthRecords = async () => {
         headers: { Authorization: `Bearer ${token}` },
       }
     );
-    console.log("fetchStudentHealthRecords:", response.data);
+
+    //console.log("fetchStudentHealthRecords:", response.data);
+    
     healthRecords.value = response.data.health_records || [];
   } catch (error) {
     console.error("โหลดข้อมูลนักเรียนล้มเหลว", error);
   }
 };
 
-const scanQR = () => {
-  console.log("Scan QR Code");
-};
+// const scanQR = () => {
+//   console.log("Scan QR Code");
+// };
 
 const addHealth = (healthReacord) => {
   if (healthReacord.health_id) {
