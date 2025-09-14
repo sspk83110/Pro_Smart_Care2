@@ -29,9 +29,12 @@ def create_app():
     app.config["JWT_COOKIE_CSRF_PROTECT"] = True
 
     # ตั้งค่า CORS (อนุญาตหลาย origin)
-    CORS(app, resources={r"/*": {"origins": [
-        "http://103.76.180.34"
-    ]}}, supports_credentials=True)
+    CORS(app, resources={r"/api/*": {"origins": [
+    "http://localhost:3000",   # dev frontend
+    "http://103.76.180.34",    # production frontend (ถ้ามี)
+    "https://smartkids.banglamung.go.th"  # production domain
+]}}, supports_credentials=True)
+
 
     # ตั้งค่า JWT
     jwt = JWTManager(app)

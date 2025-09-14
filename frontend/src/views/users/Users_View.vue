@@ -1,7 +1,4 @@
 <template>
-  <!-- App Bar ด้านบน มีปุ่ม toggle drawer -->
-  <AppBar @toggle-drawer="drawer = !drawer" />
-
   <!-- ส่วนเนื้อหาหลักของหน้า -->
   <v-main>
     <v-container>
@@ -271,11 +268,7 @@
 import { ref, shallowRef, computed, onMounted } from "vue";
 import { useRouter } from "vue-router";
 import axios from "@/utils/axios"; // ใช้ instance แทน
-import AppBar from "@/views/appbar/AppBar.vue";
 import { API_BASE_URL } from "@/assets/config";
-
-// ตัวแปรควบคุมเมนู drawer เปิด/ปิด
-const drawer = ref(true);
 
 // ตัวแปร router สำหรับเปลี่ยนหน้า
 const router = useRouter();
@@ -375,12 +368,18 @@ const showSnackbar = (message, type = "success") => {
 
 // เมื่อ component โหลดขึ้นมา
 onMounted(() => {
-  // ตรวจสอบว่ามี token หรือไม่ ถ้าไม่มีให้ไปหน้า login
   const token = localStorage.getItem("access_token");
-  if (!token) {
+  const expiresAt = localStorage.getItem("expiresAt") 
+
+  // console.log("access_token: ", token);
+  // console.log("expiresAt: ", expiresAt);
+
+  //ถ้า ไม่มีทั้ง token และเวลาหมดอายุ → แสดงว่า user ยังไม่ได้ login หรือ token ถูกลบไปแล้ว
+  if (!token && !expiresAt) {
     router.push("/login");
+    return; // หยุดการทำงานตรงนี้
   }
-  // โหลดข้อมูลผู้ใช้จาก API
+  // ---- โค้ดด้านล่างจะไม่ทำงานถ้าไม่มี token && expiresAt ----
   fetchUsers();
 });
 

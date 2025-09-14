@@ -32,30 +32,26 @@
       </v-col>
     </v-row>
   </v-container>
-
-  <!-- ใช้ App Bar ที่แยกไว้-->
-  <AppBar @toggle-drawer="drawer = !drawer" />
-
-  <!-- Router View สำหรับเนื้อหาที่เปลี่ยน (เช่น Add) -->
-  <v-main>
-    <router-view />
-  </v-main>
 </template>
 
 <script setup>
-import { ref, onMounted } from "vue";
+import { onMounted } from "vue";
 import { useRouter } from "vue-router";
-// import menuItemsData from "@/views/menu/menuItemsData";
-import AppBar from "@/views/appbar/AppBar.vue";
-
-const drawer = ref(true);
 const router = useRouter();
 
 onMounted(() => {
   const token = localStorage.getItem("access_token");
-  if (!token) {
+  const expiresAt = localStorage.getItem("expiresAt") 
+
+  // console.log("access_token: ", token);
+  // console.log("expiresAt: ", expiresAt);
+
+  //ถ้า ไม่มีทั้ง token และเวลาหมดอายุ → แสดงว่า user ยังไม่ได้ login หรือ token ถูกลบไปแล้ว
+  if (!token && !expiresAt) {
     router.push("/login");
+    return; // หยุดการทำงานตรงนี้
   }
+  // ---- โค้ดด้านล่างจะไม่ทำงานถ้าไม่มี token && expiresAt ----
 });
 const services = [
   {
@@ -108,19 +104,20 @@ const services = [
   //   icon: "mdi-bell",
   //   router: "",
   // },
-  // {
-  //   index: "8",
-  //   name: "บันทึกนำ้หนักส่วนสูง",
-  //   color: "red",
-  //   icon: "mdi-file-document",
-  //   router: "",
-  // },
+  
   {
-    index: "9",
+    index: "8",
     name: "นักเรียน",
     color: "#03a9f4",
     icon: "mdi-account-school-outline",
     router: "/students",
+  },
+  {
+    index: "9",
+    name: "ผู้ปกครอง",
+    color: "#00ffff",
+    icon: "mdi-account-cowboy-hat-outline",
+    router: "/parents",
   },
   {
     index: "10",

@@ -66,7 +66,7 @@
 </template>
 
 <script setup>
-import { ref } from "vue";
+import { ref, onMounted } from "vue";
 import { useRouter } from "vue-router";
 import axios from "axios";
 import { API_BASE_URL } from "@/assets/config";
@@ -78,6 +78,22 @@ const loading = ref(false);
 
 const router = useRouter();
 
+// ตรวจสอบว่ามี token อยู่แล้วหรือไม่
+onMounted(() => {
+  const token = localStorage.getItem("access_token");
+  const expiresAt = localStorage.getItem("expiresAt");
+
+  if (token && expiresAt && Date.now() < parseInt(expiresAt)) {
+    // ถ้ามี token ที่ยังไม่หมดอายุ ให้ redirect ไปหน้า home
+    router.push("/home");
+  } else {
+    // ถ้า token หมดอายุหรือไม่มี ให้ล้างข้อมูล
+    localStorage.removeItem("access_token");
+    localStorage.removeItem("expiresAt");
+    localStorage.removeItem("user_data");
+  }
+});
+
 const handleLogin = async () => {
   loading.value = true;
   message.value = "";
@@ -86,14 +102,29 @@ const handleLogin = async () => {
     const res = await axios.post(`${API_BASE_URL}/login`, {
       username: username.value,
       password: password.value,
-      
     });
 
     if (res.data.access_token) {
-      localStorage.setItem("access_token", res.data.access_token);
+      const token = res.data.access_token;
+
+      // ใช้ค่า expires_in จาก server หรือใช้ค่า default 7 วัน
+      const expiresIn = res.data.expires_in || 7 * 24 * 60 * 60 * 1000;
+      const expiresAt = Date.now() + expiresIn;
+
+      localStorage.setItem("access_token", token);
+      localStorage.setItem("expiresAt", expiresAt.toString());
+
+      console.log("Login successful, token expires at:", new Date(expiresAt));
+
+      message.value = "เข้าสู่ระบบสำเร็จ";
+
       const user = await getCurrentUser();
       if (user) {
         localStorage.setItem("user_data", JSON.stringify(user));
+
+        // เริ่มการตรวจสอบการหมดอายุของ token
+        startTokenExpiryCheck();
+
         await router.push("/home");
       } else {
         message.value = "ไม่สามารถโหลดข้อมูลผู้ใช้";
@@ -102,7 +133,6 @@ const handleLogin = async () => {
       message.value = "ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง";
     }
   } catch (err) {
-    // Login failed
     console.log("❌ Login failed:", err.response?.data || err.message);
     if (err.response && err.response.data?.message) {
       message.value = err.response.data.message;
@@ -114,13 +144,52 @@ const handleLogin = async () => {
   }
 };
 
-//ดึงข้อมูลผู้ใช้ที่ Login
+// ฟังก์ชันตรวจสอบการหมดอายุของ token
+const startTokenExpiryCheck = () => {
+  // ตรวจสอบทุก 1 นาที
+  setInterval(() => {
+    const expiresAt = localStorage.getItem("expiresAt");
+
+    if (!expiresAt) return;
+
+    const timeUntilExpiry = parseInt(expiresAt) - Date.now();
+
+    // เตือน 5 นาทีก่อนหมดอายุ
+    if (timeUntilExpiry > 0 && timeUntilExpiry < 5 * 60 * 1000) {
+      showExpiryWarning(timeUntilExpiry);
+    }
+
+    // หมดอายุแล้ว
+    if (timeUntilExpiry <= 0) {
+      handleTokenExpiry();
+    }
+  }, 60000); // ตรวจสอบทุก 1 นาที
+};
+
+// แสดงการเตือนก่อน token หมดอายุ
+const showExpiryWarning = (timeUntilExpiry) => {
+  const minutes = Math.ceil(timeUntilExpiry / 60000);
+  const warningMessage = `Session ของคุณจะหมดอายุใน ${minutes} นาที กรุณาบันทึกงานของคุณ`;
+
+  // ใช้ alert หรือ UI framework notification ตามความเหมาะสม
+  alert(warningMessage);
+  console.warn(warningMessage);
+};
+
+// จัดการเมื่อ token หมดอายุ
+const handleTokenExpiry = () => {
+  localStorage.removeItem("access_token");
+  localStorage.removeItem("expiresAt");
+  localStorage.removeItem("user_data");
+
+  alert("Session หมดอายุแล้ว กรุณาเข้าสู่ระบบอีกครั้ง");
+  router.push("/login");
+};
+
+// ดึงข้อมูลผู้ใช้ที่ Login
 async function getCurrentUser() {
   try {
     const token = localStorage.getItem("access_token");
-    // ดู token ที่ได้จากการ Login
-    //console.log("Token:", token);
-
     if (!token) throw new Error("Token not found");
 
     const response = await axios.get(`${API_BASE_URL}/user/me`, {
@@ -130,9 +199,6 @@ async function getCurrentUser() {
     });
 
     const user = response.data;
-    //console.log("ข้อมูลผู้ใช้:", user);
-
-    // บันทึกข้อมูลผู้ใช้ลง localStorage
     localStorage.setItem("user", JSON.stringify(user));
 
     return user;
@@ -143,7 +209,8 @@ async function getCurrentUser() {
 
     if (error.response?.status === 401) {
       localStorage.removeItem("access_token");
-      await router.push("/login");
+      localStorage.removeItem("expiresAt");
+      router.push("/login");
     }
 
     return null;
@@ -152,29 +219,27 @@ async function getCurrentUser() {
 </script>
 
 <style scoped>
-/* ทำให้ v-main สูงเต็มจอ และจัดกึ่งกลางทั้งแนวตั้ง/แนวนอน */
+/* สไตล์เดิมไม่เปลี่ยนแปลง */
 .center-content {
   display: flex;
   justify-content: center;
   align-items: center;
-  min-height: 100vh; /* เต็มหน้าจอ */
+  min-height: 100vh;
   padding: 0;
   margin: 0;
   box-sizing: border-box;
 }
 
-/* กล่อง login */
 .login-container {
   width: 100%;
   max-width: 420px;
   padding: 24px;
-  background: white; /* ปรับได้ เช่นใส่ transparency */
+  background: white;
   border-radius: 16px;
-  box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
   text-align: center;
 }
 
-/* ฟอร์ม input */
 .vector-input {
   width: 100%;
   padding: 12px 16px;
@@ -185,7 +250,6 @@ async function getCurrentUser() {
   box-sizing: border-box;
 }
 
-/* ปุ่ม */
 .vector-button {
   width: 100%;
   padding: 12px 16px;
@@ -221,4 +285,3 @@ async function getCurrentUser() {
   color: red;
 }
 </style>
-

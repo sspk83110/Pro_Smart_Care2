@@ -1,6 +1,4 @@
 <template>
-  <!-- ส่วนหัวแอปพลิเคชัน -->
-  <AppBar @toggle-drawer="drawer = !drawer" />
   <v-main>
     <v-container>
       <!-- ปุ่มควบคุมหลัก -->
@@ -324,7 +322,8 @@
               <v-card class="mb-2" variant="outlined">
                 <v-card-title class="text-subtitle-1">
                   <v-icon icon="mdi-home-map-marker" class="mr-2"></v-icon>
-                  ที่อยู่ตามทะเบียนบ้าน {{ record.selectedFullAddressPermanent }}
+                  ที่อยู่ตามทะเบียนบ้าน
+                  {{ record.selectedFullAddressPermanent }}
                 </v-card-title>
                 <v-card-text>
                   <v-row>
@@ -497,9 +496,14 @@
                       color="success"
                       variant="tonal"
                       @click="openMapPicker"
+                      :disabled="!record"
                     >
                       <v-icon icon="mdi-map" class="mr-2"></v-icon>
-                      เลือกตำแหน่งจากแผนที่
+                      {{
+                        record.latitude && record.longitude
+                          ? "แก้ไขตำแหน่งบนแผนที่"
+                          : "เลือกตำแหน่งจากแผนที่"
+                      }}
                     </v-btn>
                   </div>
                 </v-card-text>
@@ -568,6 +572,276 @@
       </v-card>
     </v-dialog>
 
+    <!-- รายละเอืยดนักเรียน -->
+    <v-dialog v-model="students_Popup" persistent max-width="850">
+      <v-card style="background-color: #ffffff; color: black">
+        <!-- หัวข้อฟอร์ม -->
+        <v-toolbar flat :color="isEditing ? 'success' : 'success'">
+          <v-card-title class="text-white">
+            {{ "ข้อมูลนักเรียน" }}
+          </v-card-title>
+        </v-toolbar>
+
+        <v-card-text>
+          <v-row>
+            <!-- รูปภาพนักเรียน -->
+            <v-col cols="12" sm="12">
+              <!-- แสดงภาพตัวอย่าง หากเลือกใหม่ -->
+              <div v-if="imagePreview" class="mt-2 text-center">
+                <v-img
+                  :src="imagePreview"
+                  max-width="250"
+                  max-height="250"
+                  class="mx-auto"
+                  style="border-radius: 12px; border: 1px solid #ccc"
+                />
+              </div>
+
+              <!-- แสดงภาพจากฐานข้อมูล หากยังไม่มี preview -->
+              <div v-else-if="record?.student_photo" class="mt-2 text-center">
+                <v-img
+                  :src="getStudentImageUrl(record.student_photo)"
+                  max-width="250"
+                  max-height="250"
+                  class="mx-auto"
+                  style="border-radius: 12px; border: 1px solid #ccc"
+                />
+              </div>
+
+              <!-- fallback ถ้าไม่มีภาพเลย -->
+              <div v-else class="text-grey mt-2 text-center">
+                ยังไม่มีรูปภาพ
+              </div>
+            </v-col>
+            <!-- คำนำหน้า -->
+            <v-col cols="12" sm="4">
+              <v-text-field
+                v-model="record.prefix_name"
+                :items="['เด็กชาย', 'เด็กหญิง']"
+                label="คำนำหน้า"
+                variant="outlined"
+                color="success"
+                disabled
+                :rules="[required]"
+              />
+            </v-col>
+
+            <!-- รหัสนักเรียน -->
+            <v-col cols="12" sm="4">
+              <v-text-field
+                v-model="record.student_code"
+                label="รหัสนักเรียน"
+                variant="outlined"
+                color="success"
+                disabled
+                :rules="[required, idStudent_code]"
+              />
+            </v-col>
+
+            <!-- เลขบัตรประชาชน -->
+            <v-col cols="12" sm="4">
+              <v-text-field
+                v-model="record.id_card_number"
+                label="เลขบัตรประชาชน"
+                variant="outlined"
+                color="success"
+                disabled
+                :rules="[required, idCardRule]"
+              />
+            </v-col>
+
+            <!-- ชื่อ -->
+            <v-col cols="12" sm="6">
+              <v-text-field
+                v-model="record.first_name"
+                label="ชื่อ"
+                variant="outlined"
+                color="success"
+                disabled
+                :rules="[required]"
+              />
+            </v-col>
+
+            <!-- นามสกุล -->
+            <v-col cols="12" sm="6">
+              <v-text-field
+                v-model="record.last_name"
+                label="นามสกุล"
+                variant="outlined"
+                color="success"
+                disabled
+                :rules="[required]"
+              />
+            </v-col>
+
+            <!-- ชื่อเล่น -->
+            <v-col cols="12" sm="6">
+              <v-text-field
+                v-model="record.nickname"
+                label="ชื่อเล่น"
+                variant="outlined"
+                color="success"
+                disabled
+              />
+            </v-col>
+
+            <!-- เพศ -->
+            <v-col cols="12" sm="4">
+              <v-text-field
+                v-model="record.gender"
+                :items="['ชาย', 'หญิง']"
+                label="เพศ"
+                variant="outlined"
+                color="success"
+                disabled
+              />
+            </v-col>
+            <!-- หมู่เลือด -->
+            <v-col cols="12" sm="2">
+              <v-text-field
+                v-model="record.blood_group"
+                :items="['A', 'B', 'AB', 'O']"
+                label="หมู่เลือด"
+                variant="outlined"
+                color="success"
+                disabled
+              />
+            </v-col>
+            <!-- วันเกิด -->
+            <v-col cols="12" sm="5">
+              <v-menu
+                v-model="showDatePicker"
+                :close-on-content-click="false"
+                transition="scale-transition"
+                offset-y
+                min-width="auto"
+              >
+                <template v-slot:activator="{ props }">
+                  <v-text-field
+                    :model-value="formatThaiDate(record.birth_date)"
+                    label="วันเกิด"
+                    prepend-inner-icon="mdi-calendar"
+                    readonly
+                    v-bind="props"
+                    variant="outlined"
+                    clearable
+                    @click:clear="clearBirthDate"
+                    disabled
+                  ></v-text-field>
+                </template>
+                <v-date-picker
+                  v-model="birthDateModel"
+                  @update:modelValue="handleDateSelect"
+                  locale="th"
+                  :first-day-of-week="0"
+                  :max="new Date().toISOString().split('T')[0]"
+                ></v-date-picker>
+              </v-menu>
+            </v-col>
+            <!-- อายุ -->
+            <v-col cols="12" sm="4">
+              <v-text-field
+                :value="
+                  'อายุ' +
+                  ' ' +
+                  calculateAge(record.birth_date) +
+                  (calculateAge(record.birth_date) ? '' : '')
+                "
+                readonly
+                variant="outlined"
+                color="success"
+                disabled
+              />
+            </v-col>
+            <!-- สถานะการเรียน -->
+            <v-col cols="12" sm="3">
+              <v-checkbox
+                v-model="record.is_active"
+                label="สถานะศึกษาอยู่"
+                :true-value="1"
+                :false-value="0"
+                color="success"
+                disabled
+              />
+            </v-col>
+
+            <!-- ที่อยู่ตามทะเบียนบ้าน -->
+            <v-col cols="12" sm="12">
+              <v-card class="mb-2" variant="outlined" disabled>
+                <v-card-title class="text-subtitle-1">
+                  <v-icon icon="mdi-home-map-marker" class="mr-2"></v-icon>
+                  ที่อยู่ตามทะเบียนบ้าน
+                  {{ record.selectedFullAddressPermanent }}
+                </v-card-title>
+              </v-card>
+            </v-col>
+
+            <!-- ที่อยู่ปัจจุบัน -->
+            <v-col cols="12" sm="12">
+              <v-card class="mb-2" variant="outlined" disabled>
+                <v-card-title class="text-subtitle-1">
+                  <v-icon icon="mdi-home-map-marker" class="mr-2"></v-icon>
+                  ที่อยู่ปัจจุบัน {{ record.selectedFullAddressPresent }}
+                </v-card-title>
+              </v-card>
+            </v-col>
+
+            <!-- ส่วนพิกัดที่ตั้ง -->
+            <v-col cols="12">
+              <v-card class="mb-4" variant="outlined" disabled>
+                <v-card-title class="text-subtitle-1">
+                  <v-icon icon="mdi-map-marker" class="mr-2"></v-icon>
+                  พิกัดที่ตั้ง
+                </v-card-title>
+                <v-card-text>
+                  <v-row>
+                    <!-- ละติจูด -->
+                    <v-col cols="12" sm="6">
+                      <v-text-field
+                        v-model="record.latitude"
+                        label="ละติจูด (Latitude)"
+                        variant="outlined"
+                        color="success"
+                        disabled
+                        type="number"
+                        step="0.000001"
+                        :rules="[latitudeRule]"
+                      />
+                    </v-col>
+                    <!-- ลองติจูด -->
+                    <v-col cols="12" sm="6">
+                      <v-text-field
+                        v-model="record.longitude"
+                        label="ลองติจูด (Longitude)"
+                        variant="outlined"
+                        color="success"
+                        disabled
+                        type="number"
+                        step="0.000001"
+                        :rules="[longitudeRule]"
+                      />
+                    </v-col>
+                  </v-row>
+                </v-card-text>
+              </v-card>
+            </v-col>
+          </v-row>
+        </v-card-text>
+
+        <v-divider></v-divider>
+
+        <!-- ปุ่มควบคุมฟอร์ม -->
+        <v-card-actions class="justify-end">
+          <v-btn
+            color="green darken-1"
+            variant="flat"
+            @click="students_Popup = false"
+            >ตกลง</v-btn
+          >
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
+
     <!-- กล่องโต้ตอบแผนที่ OpenLayers -->
     <v-dialog v-model="mapDialog" max-width="800" fullscreen>
       <v-card>
@@ -581,10 +855,9 @@
           </v-btn>
         </v-toolbar>
         <v-card-text style="height: calc(100vh - 120px); padding: 0">
-          <!-- องค์ประกอบแผนที่ OpenLayers -->
+          <!-- องค์ประกอบแผนที่ OpenLayers   id="map" -->
           <div
             ref="mapRef"
-            id="map"
             style="width: 100%; height: 100%; position: relative"
           >
             <!-- ปุ่มสลับแผนที่ -->
@@ -650,10 +923,17 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onBeforeUnmount, nextTick } from "vue";
+import {
+  ref,
+  computed,
+  onMounted,
+  onBeforeUnmount,
+  nextTick,
+  watch,
+} from "vue";
+
 import { useRouter } from "vue-router";
 import axios from "@/utils/axios"; // ใช้ instance แทน
-import AppBar from "@/views/appbar/AppBar.vue";
 import { API_BASE_URL } from "@/assets/config";
 
 // นำเข้าไลบรารี OpenLayers
@@ -674,7 +954,10 @@ import provinces from "@/assets/provinces.json";
 import districts from "@/assets/districts.json";
 import subdistricts from "@/assets/subdistricts.json";
 
-//วันเกิด
+// แสดงข้อมูลนักเรียน
+const students_Popup = ref(false);
+
+// วันเกิด
 // เพิ่มตัวแปรเหล่านี้
 const showDatePicker = ref(false);
 const birthDateModel = ref("");
@@ -893,26 +1176,84 @@ const useSameAsPermanentAddress = () => {
 };
 
 // เพิ่มตัวแปรเหล่านี้
-const imagePreview = ref(null);
+// const imagePreview = ref(null);
+const imagePreview = ref(""); // ✅ ต้องเป็น ref
 const selectedImageFile = ref(null);
 
 // ฟังก์ชันจัดการการอัพโหลดรูปภาพ
 const handleImageUpload = (event) => {
   const file = event.target.files[0];
-  if (file) {
-    selectedImageFile.value = file;
-
-    // สร้าง URL สำหรับแสดงภาพตัวอย่าง
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      imagePreview.value = e.target.result;
-    };
-    reader.readAsDataURL(file);
-  } else {
+  if (!file) {
     imagePreview.value = null;
     selectedImageFile.value = null;
+    return;
   }
+
+  // ตรวจสอบขนาดไฟล์ (เช่น 2MB)
+  if (file.size > 2 * 1024 * 1024) {
+    showSnackbar("กรุณาเลือกรูปภาพที่เล็กกว่า 2MB", "error");
+    return;
+  }
+
+  selectedImageFile.value = file;
+
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    const img = new Image();
+    img.src = e.target.result;
+
+    img.onload = () => {
+      const canvas = document.createElement("canvas");
+      const ctx = canvas.getContext("2d");
+
+      // ย่อขนาดรูป (เช่น max 800px)
+      const MAX_WIDTH = 800;
+      const MAX_HEIGHT = 800;
+      let width = img.width;
+      let height = img.height;
+
+      if (width > height) {
+        if (width > MAX_WIDTH) {
+          height *= MAX_WIDTH / width;
+          width = MAX_WIDTH;
+        }
+      } else {
+        if (height > MAX_HEIGHT) {
+          width *= MAX_HEIGHT / height;
+          height = MAX_HEIGHT;
+        }
+      }
+
+      canvas.width = width;
+      canvas.height = height;
+      ctx.drawImage(img, 0, 0, width, height);
+
+      // แปลงกลับเป็น base64 (JPEG คุณภาพ 0.8)
+      const resizedBase64 = canvas.toDataURL("image/jpeg", 0.8);
+
+      imagePreview.value = resizedBase64; // ใช้แสดง preview + ส่งไป backend
+    };
+  };
+
+  reader.readAsDataURL(file);
 };
+
+// const handleImageUpload = (event) => {
+//   const file = event.target.files[0];
+//   if (file) {
+//     selectedImageFile.value = file;
+
+//     // สร้าง URL สำหรับแสดงภาพตัวอย่าง
+//     const reader = new FileReader();
+//     reader.onload = (e) => {
+//       imagePreview.value = e.target.result;
+//     };
+//     reader.readAsDataURL(file);
+//   } else {
+//     imagePreview.value = null;
+//     selectedImageFile.value = null;
+//   }
+// };
 
 // ฟังก์ชันลบรูปภาพ
 const removeImage = () => {
@@ -922,25 +1263,24 @@ const removeImage = () => {
   document.querySelector('input[type="file"]').value = "";
 };
 
-// ฟังก์ชันโหลดรูปภาพ
+// ฟังก์ชันโหลดรูปภาพมาแสดง
 const getStudentImageUrl = (filename) => {
   if (!filename) return "";
-  return `${API_BASE_URL}/uploads/${filename}`; // เปลี่ยน URL ตามจริง
+  return `${API_BASE_URL}/uploads/students/${filename}`; // เปลี่ยน URL ตามจริง
 };
 
-// เมื่อโหลดข้อมูลนักเรียนสำหรับแก้ไข
-const editStudent = (student) => {
-  isEditing.value = true;
+// ฟังก์ชันเปิด popup แสดงข้อมูลนักเรียน
+const viewStudent = (student) => {
   record.value = { ...student };
 
   // แยกเลขที่ออกจาก present_address
   if (student.present_address) {
-    selectedFullAddressPresent.value = record.value.present_address ;
+    selectedFullAddressPresent.value = record.value.present_address;
   }
 
   // แยกเลขที่ออกจาก permanent_address
   if (student.permanent_address) {
-    selectedFullAddressPermanent.value =  student.permanent_address;
+    selectedFullAddressPermanent.value = student.permanent_address;
   }
 
   // ตั้งค่าวันเกิด
@@ -950,9 +1290,39 @@ const editStudent = (student) => {
       : student.birth_date;
   }
 
-  dialog.value = true;
+  students_Popup.value = true;
 };
 
+// เมื่อโหลดข้อมูลนักเรียนสำหรับแก้ไข
+const editStudent = (student) => {
+  isEditing.value = true;
+  record.value = { ...student };
+
+  // แยกเลขที่ออกจาก present_address
+  if (student.present_address) {
+    selectedFullAddressPresent.value = record.value.present_address;
+  }
+
+  // แยกเลขที่ออกจาก permanent_address
+  if (student.permanent_address) {
+    selectedFullAddressPermanent.value = student.permanent_address;
+  }
+
+  // ตั้งค่าวันเกิด
+  if (student.birth_date) {
+    birthDateModel.value = student.birth_date.includes("T")
+      ? student.birth_date.split("T")[0]
+      : student.birth_date;
+  }
+
+  // ⭐⭐⭐ ตั้งค่าพิกัดแผนที่ ⭐⭐⭐
+  if (student.latitude && student.longitude) {
+    mapLatitude.value = student.latitude;
+    mapLongitude.value = student.longitude;
+  }
+
+  dialog.value = true;
+};
 
 // เพิ่มตัวแปร ref
 const isSatellite = ref(false); // ค่าเริ่มต้น = street map
@@ -979,7 +1349,6 @@ const toggleMapType = () => {
 const router = useRouter();
 
 // ตัวแปร UI
-const drawer = ref(true); // สำหรับเปิด/ปิดเมนู
 const dialog = ref(false); // ควบคุมการแสดงฟอร์ม
 const isEditing = ref(false); // ตรวจสอบว่าเป็นการแก้ไขหรือเพิ่ม
 const search = ref(""); // สำหรับค้นหาในตาราง
@@ -1081,6 +1450,17 @@ let map = null; // ตัวแปรเก็บออบเจ็กต์แ�
 let markerSource = null; // แหล่งข้อมูลสำหรับ marker
 let marker = null; // ตัว marker บนแผนที่
 
+// ดูการเปลี่ยนแปลงของ mapDialog
+watch(
+  () => mapDialog.value,
+  (newVal) => {
+    if (!newVal && map) {
+      // เมื่อปิด dialog ให้ลบ target ของแผนที่เพื่อป้องกัน memory leaks
+      map.setTarget(undefined);
+    }
+  }
+);
+
 // กฎการตรวจสอบความถูกต้อง
 const required = (v) => !!v || "จำเป็นต้องกรอก";
 const idCardRule = (v) => (v && v.length === 13) || "ต้องมี 13 หลัก";
@@ -1120,7 +1500,7 @@ const fetchStudents = async () => {
 
     const data = response.data.students || [];
 
-    //console.log("✅ ข้อมูลที่ได้จาก backend:", data);
+    // console.log("✅ ข้อมูลที่ได้จาก backend:", data);
 
     students.value = data.map((t) => ({
       ...t,
@@ -1147,8 +1527,9 @@ const formatGender = (gender) => {
 
 // ฟังก์ชันสำหรับเปิดแผนที่เลือกตำแหน่ง
 const openMapPicker = () => {
-  mapLatitude.value = record.value.latitude || 13.736717; // ค่าเริ่มต้นที่กรุงเทพ
-  mapLongitude.value = record.value.longitude || 100.523186;
+  // ใช้ค่าจาก record หรือค่าดีฟอลต์
+  mapLatitude.value = record.value.latitude || 13.0172384;
+  mapLongitude.value = record.value.longitude || 100.9297466;
   mapDialog.value = true;
 
   // รอให้ DOM อัพเดทก่อนเริ่มต้นแผนที่
@@ -1158,11 +1539,13 @@ const openMapPicker = () => {
     } else {
       map.setTarget(mapRef.value);
       map.updateSize();
-      // อัพเดทตำแหน่ง marker ถ้ามีค่าพิกัดอยู่แล้ว
+
+      // อัพเดทตำแหน่ง marker จากค่าปัจจุบัน
       if (mapLatitude.value && mapLongitude.value) {
         const coordinate = fromLonLat([mapLongitude.value, mapLatitude.value]);
         updateMarker(coordinate);
         map.getView().setCenter(coordinate);
+        map.getView().setZoom(16); // เพิ่มการตั้งค่า zoom
       }
     }
   });
@@ -1190,18 +1573,18 @@ const initMap = () => {
 
   // สร้างแผนที่
   baseLayer = new TileLayer({
-    source: new OSM(),
+    source: isSatellite.value ? satelliteSource : new OSM(),
   });
 
   map = new Map({
-    target: "map",
-    layers: [
-      baseLayer,
-      markerLayer, // จากเดิม
-    ],
+    target: mapRef.value, // ใช้ ref แทน string ID
+    layers: [baseLayer, markerLayer],
     view: new View({
-      center: fromLonLat([100.523186, 13.736717]),
-      zoom: 12,
+      center: fromLonLat([
+        mapLongitude.value || 100.9297466,
+        mapLatitude.value || 13.0172384,
+      ]),
+      zoom: 16,
     }),
     interactions: defaultInteractions(),
   });
@@ -1223,7 +1606,6 @@ const initMap = () => {
   if (mapLatitude.value && mapLongitude.value) {
     const coordinate = fromLonLat([mapLongitude.value, mapLatitude.value]);
     updateMarker(coordinate);
-    map.getView().setCenter(coordinate);
   }
 };
 
@@ -1292,19 +1674,19 @@ const save = async () => {
       last_name: record.value.last_name,
       nickname: record.value.nickname,
       gender: record.value.gender,
-      birth_date: record.value.birth_date,
-      age_range: calculateAge(record.value.birth_date), // ✅ แก้จุดนี้
-
+      birth_date: record.value.birth_date
+        ? record.value.birth_date instanceof Date
+          ? record.value.birth_date.toISOString()
+          : new Date(record.value.birth_date).toISOString()
+        : null,
+      age_range: calculateAge(record.value.birth_date),
       is_active: record.value.is_active,
-
-      present_address: selectedFullAddressPresent.value, // ที่อยู่ปัจจุบัน
-      permanent_address: selectedFullAddressPermanent.value, // ที่อยู่ตามทะเบียนบ้าน
-
+      present_address: selectedFullAddressPresent.value,
+      permanent_address: selectedFullAddressPermanent.value,
       latitude: record.value.latitude,
       longitude: record.value.longitude,
-
       blood_group: record.value.blood_group,
-      image: imagePreview.value, // ถ้า backend รอรับเป็น 'image'
+      student_photo: imagePreview.value,
     };
     const config = {
       headers: {
@@ -1316,7 +1698,8 @@ const save = async () => {
     //console.log("image:", imagePreview.value);
     //console.log("present_address:", selectedFullAddressPresent.value);
     //console.log("permanent_address:", selectedFullAddressPermanent.value);
-    //console.log("เตรียมข้อมูล :", payload);
+    console.log("เตรียมข้อมูล :", payload);
+
     if (isEditing.value) {
       await axios.put(
         `${API_BASE_URL}/student/update/${payload.student_id}`,
@@ -1325,9 +1708,11 @@ const save = async () => {
       );
       showSnackbar("อัปเดตข้อมูลนักเรียนสำเร็จ!", "success");
       toggleStudent();
+      //resetPage();
     } else {
       await axios.post(`${API_BASE_URL}/student/insert`, payload, config);
       showSnackbar("เพิ่มผู้ใช้สำเร็จ!", "success");
+      // resetPage();
     }
 
     dialog.value = false;
@@ -1353,10 +1738,18 @@ const showSnackbar = (message, type = "success") => {
 // เมื่อคอมโพเนนต์ถูกเมานต์
 onMounted(() => {
   const token = localStorage.getItem("access_token");
-  if (!token) {
+  const expiresAt = localStorage.getItem("expiresAt");
+
+  // console.log("access_token: ", token);
+  // console.log("expiresAt: ", expiresAt);
+
+  //ถ้า ไม่มีทั้ง token และเวลาหมดอายุ → แสดงว่า user ยังไม่ได้ login หรือ token ถูกลบไปแล้ว
+  if (!token && !expiresAt) {
     router.push("/login");
-    return;
+    return; // หยุดการทำงานตรงนี้
   }
+  //---- โค้ดด้านล่างจะไม่ทำงานถ้าไม่มี token && expiresAt ----
+
   fetchStudents();
 });
 
@@ -1371,6 +1764,11 @@ onBeforeUnmount(() => {
 // กลับไปหน้าเดิม
 const goBack = () => {
   router.push("/home");
+};
+
+//รีเฟรชหน้า
+const resetPage = () => {
+  window.location.reload();
 };
 </script>
 

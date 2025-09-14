@@ -1,7 +1,4 @@
 <template>
-  <!-- App Bar ด้านบน -->
-  <AppBar @toggle-drawer="drawer = !drawer" />
-
   <v-main>
     <v-container>
       <!-- ปุ่มควบคุม -->
@@ -35,7 +32,7 @@
         v-if="currentTable === 'room'"
         rounded
         class="pa-4"
-        style="background-color: #ffffff"
+        style="background-color: #f5f7fa"
       >
         <v-row class="mb-4">
           <v-col cols="auto">
@@ -135,7 +132,7 @@
         v-else-if="currentTable === 'level'"
         rounded
         class="pa-4"
-        style="background-color: #ffffff"
+        style="background-color: #f5f7fa"
       >
         <v-row class="mb-4">
           <v-col cols="auto">
@@ -231,7 +228,8 @@
       </v-sheet>
 
       <!-- ตารางโรงเรียน -->
-      <v-sheet v-else rounded class="pa-4" style="background-color: #ffffff">
+       
+      <v-sheet v-else rounded class="pa-4" style="background-color: #f5f7fa">
         <v-row class="mb-4">
           <v-col cols="auto">
             <v-btn color="green-darken-1" @click="addSchool">
@@ -570,13 +568,11 @@
 import { ref, computed, onMounted } from "vue";
 import { useRouter } from "vue-router";
 import axios from "@/utils/axios"; // ใช้ instance แทน
-import AppBar from "@/views/appbar/AppBar.vue";
 import { API_BASE_URL } from "@/assets/config";
 
 const router = useRouter();
 
 // ตัวแปรควบคุม UI
-const drawer = ref(true);
 const currentTable = ref("room");
 const dialog = ref(false);
 const confirmDeleteDialog = ref(false);
@@ -1018,7 +1014,7 @@ const fetchClassRoom = async () => {
     });
 
     // Log ข้อมูลที่ได้จาก backend
-    console.log("Raw response.data from backend:", response.data);
+    //console.log("Raw response.data from backend:", response.data);
 
     // แปลงข้อมูลให้มี school_name และ level_name
     rooms.value = response.data.map((room) => ({
@@ -1117,13 +1113,21 @@ const loadInitialData = async () => {
   await fetchClassRoom();
 
   const token = localStorage.getItem("access_token");
-  if (!token) {
+  const expiresAt = localStorage.getItem("expiresAt");
+
+  // console.log("access_token: ", token);
+  // console.log("expiresAt: ", expiresAt);
+
+  //ถ้า ไม่มีทั้ง token และเวลาหมดอายุ → แสดงว่า user ยังไม่ได้ login หรือ token ถูกลบไปแล้ว
+  if (!token && !expiresAt) {
     router.push("/login");
-    return;
+    return; // หยุดการทำงานตรงนี้
   }
+  //---- โค้ดด้านล่างจะไม่ทำงานถ้าไม่มี token && expiresAt ----
 
   fetchTeachers(); // ไม่ต้องรอ await ก็ได้ถ้าโหลดภายหลัง
 };
+
 // ใช้ onMounted แบบไม่ await ตรงๆ
 onMounted(() => {
   loadInitialData();

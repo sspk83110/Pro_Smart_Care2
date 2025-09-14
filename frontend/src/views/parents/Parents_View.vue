@@ -10,7 +10,7 @@
         </v-col>
         <v-col cols="auto" class="pa-0 ml-3">
           <v-btn color="success" @click="toggleTeacher">
-            <v-icon start>mdi-account-badge-outline</v-icon> เพิ่มข้อมูลครู
+            <v-icon start>mdi-account-cowboy-hat-outline</v-icon> เพิ่มข้อมูลผู้ปกครอง
           </v-btn>
         </v-col>
       </v-row>
@@ -30,12 +30,12 @@
             <v-toolbar flat class="bg-success text-white">
               <v-toolbar-title>
                 <v-icon
-                  icon="mdi-account-badge-outline"
+                  icon="mdi-account-cowboy-hat-outline"
                   size="x-small"
                   class="me-2"
                   color="white"
                 />
-                ตารางข้อมูลครู
+                ตารางข้อมูลผู้ปกครอง
               </v-toolbar-title>
               <v-spacer></v-spacer>
               <v-text-field
@@ -296,7 +296,7 @@ const headers = [
   { title: "ชื่อ-สกุล", key: "full_name" }, // ใช้ key นี้กับ item.full_name
   { title: "อีเมล", key: "email" },
   { title: "โทรศัพท์", key: "phone_number" },
-  { title: "โรงเรียน", key: "school_name" },
+  { title: "นักเรียน", key: "students_name" },
   { title: "แก้ไข", key: "edit", align: "center" },
   { title: "ลบ", key: "delete", align: "center" },
 ];

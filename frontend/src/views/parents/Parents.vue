@@ -4,7 +4,7 @@
       <AppBar @toggle-drawer="drawer = !drawer" />
       <!-- AppBar -->
       <router-view />
-      <!-- ตัวนี้จะ render Home_View หรือ Add ตาม path -->
+      <!-- ตัวนี้จะ render Parents_View หรือ Add ตาม path -->
       <AppFooter />
       <!-- Footer ด้านล่าง -->
     </v-main>
