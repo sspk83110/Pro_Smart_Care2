@@ -71,6 +71,77 @@ def get_student_behavior_records_by_teacher_id(teacher_id):
         if conn:
             conn.close()
 
+@behavior_records_bp.route("/student_behavior_records", methods=["GET"])
+@jwt_required()
+def get_student_behavior_records():
+
+    claims = get_jwt()
+    user_id = claims["user_id"]
+
+    conn = None
+    cursor = None
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+
+        cursor.execute("SELECT teacher_id FROM users WHERE user_id = %s", (user_id,))
+        result_teacher = cursor.fetchone()
+
+        if not result_teacher:
+            return jsonify({"message": "Teacher not found"}), 404
+
+        teacher_id = result_teacher[0]
+
+        cursor.execute(
+            """
+            SELECT 
+                s.student_id, s.student_code, s.prefix_name, s.first_name, s.last_name, c.class_id, c.class_name, 
+                cr.classroom_id, cr.classroom_name, br.behavior_id, br.record_date, br.milk_status,
+                br.lunch_status, br.snack_status, br.brushing_status, br.sleeping_status, br.toilet_status,
+                br.notes, br.record_status, sch.school_name
+            FROM students s 
+            LEFT JOIN behavior_records br on s.student_id = br.student_id and br.record_date = CURRENT_DATE()
+            LEFT JOIN class_history ch on s.student_id = ch.student_id
+            LEFT JOIN classroom_teachers ct on ch.classroom_id = ct.classroom_id
+            LEFT JOIN classrooms cr on ct.classroom_id = cr.classroom_id
+            LEFT JOIN classes c on cr.class_id = c.class_id
+            LEFT JOIN schools sch on c.school_id = sch.school_id
+            WHERE ct.teacher_id = %s
+            ORDER BY s.student_code ASC
+        """,
+            (teacher_id,),
+        
+        )
+
+        behavior_records = cursor.fetchall()
+
+        if not behavior_records:
+            return jsonify({"message": "ไม่พบข้อมูลบันทึกสังเกตพฤติกรรม", "behavior_records": []}), 404
+
+        columns = [col[0] for col in cursor.description]
+        result = [dict(zip(columns, row)) for row in behavior_records]
+
+        for item in result:
+            first_name = item.get('first_name', '') 
+            last_name = item.get('last_name', '')
+            prefix = item.get('prefix_name', '') 
+
+            item['student_fullname'] = f"{prefix}{first_name} {last_name}".strip()
+            
+            for key, value in item.items():
+                if isinstance(value, (datetime, date)):
+                    item[key] = value.isoformat()
+
+        return jsonify({"behavior_records": result}), 200
+    except Exception as e:
+        print("❌ ERROR:", e)
+        return jsonify({"error": str(e)}), 500
+    finally:
+        if cursor:
+            cursor.close()
+        if conn:
+            conn.close()
+
 
 # API Insert
 @behavior_records_bp.route("/behavior_records/insert", methods=["POST"])
@@ -240,11 +311,103 @@ def delete_behavior_record(behavior_id):
         print("❌ ERROR:", e)
         return jsonify({"error": str(e)}), 500
 
-# def find_teacher_by_user_id(user_id):
-#     conn = get_db_connection()
-#     cursor = conn.cursor(dictionary=True)
-#     cursor.execute("SELECT * FROM teachers WHERE user_id = %s", (user_id,))
-#     teacher = cursor.fetchone()
-#     cursor.close()
-#     conn.close()
-#     return teacher
+@behavior_records_bp.route("/history_behavior_records", methods=["GET"])
+@jwt_required()
+def get_history_behavior_records():
+
+    claims = get_jwt()
+    user_id = claims["user_id"]
+
+    # params for search
+    student_code = request.args.get("student_code")
+    student_name = request.args.get("student_name")
+    date_from = request.args.get("date_from")
+    date_to = request.args.get("date_to")
+
+    conn = None
+    cursor = None
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+
+        cursor.execute("SELECT teacher_id FROM users WHERE user_id = %s", (user_id,))
+        result_teacher = cursor.fetchone()
+
+        if not result_teacher:
+            return jsonify({"message": "Teacher not found"}), 404
+
+        teacher_id = result_teacher[0]
+
+        sql = """
+            SELECT 
+                s.student_id, s.student_code, s.prefix_name, s.first_name, s.last_name, c.class_id, c.class_name, 
+                cr.classroom_id, cr.classroom_name, br.behavior_id, br.record_date, br.milk_status,
+                br.lunch_status, br.snack_status, br.brushing_status, br.sleeping_status, br.toilet_status,
+                br.notes, br.record_status, sch.school_name
+            FROM behavior_records br
+            LEFT JOIN students s on br.student_id = s.student_id 
+            LEFT JOIN class_history ch on s.student_id = ch.student_id
+            LEFT JOIN classroom_teachers ct on ch.classroom_id = ct.classroom_id
+            LEFT JOIN classrooms cr on ct.classroom_id = cr.classroom_id
+            LEFT JOIN classes c on cr.class_id = c.class_id
+            LEFT JOIN schools sch on c.school_id = sch.school_id
+        """
+        params = []
+
+        sql += " WHERE ct.teacher_id = %s"
+        params.append(teacher_id)
+
+        if student_code:
+            sql += " AND s.student_code LIKE %s"
+            params.append(f"%{student_code}%")
+
+        if student_name:
+            sql += " AND (s.first_name LIKE %s OR s.last_name LIKE %s)"
+            params.append(f"%{student_name}%")
+            params.append(f"%{student_name}%")
+
+        if date_from and not date_to:
+            sql += " AND Date(br.record_date) = %s"
+            params.append(date_from)
+
+        if date_to and not date_from:
+            sql += " AND Date(br.record_date) = %s"
+            params.append(date_to)
+
+        if date_from and date_to:
+            sql += " AND Date(br.record_date) BETWEEN %s AND %s"
+            params.append(date_from)
+            params.append(date_to)
+
+        sql += " ORDER BY br.record_date DESC, s.student_code ASC"
+
+        cursor.execute(sql, params)
+
+        behavior_records = cursor.fetchall()
+
+        if not behavior_records:
+            return jsonify({"message": "ไม่พบข้อมูลบันทึกสังเกตพฤติกรรม", "behavior_records": []}), 404
+
+        columns = [col[0] for col in cursor.description]
+        result = [dict(zip(columns, row)) for row in behavior_records]
+
+        for item in result:
+            first_name = item.get('first_name', '') 
+            last_name = item.get('last_name', '')
+            prefix = item.get('prefix_name', '') 
+
+            item['student_fullname'] = f"{prefix}{first_name} {last_name}".strip()
+            
+            for key, value in item.items():
+                if isinstance(value, (datetime, date)):
+                    item[key] = value.isoformat()
+
+        return jsonify({"behavior_records": result}), 200
+    except Exception as e:
+        print("❌ ERROR:", e)
+        return jsonify({"error": str(e)}), 500
+    finally:
+        if cursor:
+            cursor.close()
+        if conn:
+            conn.close()

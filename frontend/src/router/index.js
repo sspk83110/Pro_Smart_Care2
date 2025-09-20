@@ -18,6 +18,8 @@ import health_records from "../views/health_records/HealthRecords.vue";
 import health_records_view from "../views/health_records/HealthRecords_View.vue";
 import behavior_records from "@/views/behavior_records/BehaviorRecords.vue";
 import behavior_records_View from "@/views/behavior_records/BehaviorRecords_View.vue";
+import history_records from "@/views/history_records/HistoryRecords.vue";
+import history_records_view from "@/views/history_records/HistoryRecords_View.vue";
 
 // ฟังก์ชันตรวจสอบ access_token
 function checkToken() {
@@ -115,6 +117,21 @@ const routes = [
       requiresAuth: true,
     }, // ต้องล็อกอิน
     children: [{ path: "", component: behavior_records_View }],
+  },
+  {
+    path: "/historyRecords/:type(health|behavior)",
+    component: history_records,
+    meta: {
+      requiresAuth: true,
+    }, // ต้องล็อกอิน
+    children: [
+      {
+        path: "",
+        name: "historyRecords",
+        component: history_records_view,
+        props: (route) => ({ type: route.params.type }),
+      },
+    ],
   },
 ];
 

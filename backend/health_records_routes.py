@@ -78,6 +78,84 @@ def get_student_health_records_by_teacher_id(teacher_id):
         if conn:
             conn.close()
 
+@health_records_bp.route("/student_health_records", methods=["GET"])
+@jwt_required()
+def get_student_health_records():
+
+    claims = get_jwt()
+    user_id = claims["user_id"]
+
+    conn = None
+    cursor = None
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+
+        cursor.execute("SELECT teacher_id FROM users WHERE user_id = %s", (user_id,))
+        result_teacher = cursor.fetchone()
+
+        if not result_teacher:
+            return jsonify({"message": "Teacher not found"}), 404
+
+        teacher_id = result_teacher[0]
+
+        cursor.execute(
+            """
+            SELECT 
+                s.student_id, s.student_code, s.prefix_name, s.first_name, s.last_name
+                , c.classroom_id, c.classroom_name, hr.health_id 
+                , hr.attendance_status, hr.record_date, hr.body_temperature
+                , hr.nails_status, hr.hair_status, hr.teeth_status
+                , hr.body_status, hr.eye_status, hr.ear_status
+                , hr.nose_status, hr.notes, hr.student_photo, hr.photo_path
+            FROM students s 
+            LEFT JOIN health_records hr on s.student_id = hr.student_id and hr.record_date = CURRENT_DATE()
+            LEFT JOIN class_history ch on s.student_id = ch.student_id
+            LEFT JOIN classroom_teachers ct on ch.classroom_id = ct.classroom_id
+            LEFT JOIN classrooms c on ct.classroom_id = c.classroom_id
+            WHERE ct.teacher_id = %s
+            ORDER BY s.student_code ASC
+        """,
+            (teacher_id,),
+        
+        )
+
+        health_records = cursor.fetchall()
+
+        if not health_records:
+            return jsonify({"message": "ไม่พบข้อมูลตรวจสุขภาพ", "health_records": []}), 404
+
+        columns = [col[0] for col in cursor.description]
+        result = [dict(zip(columns, row)) for row in health_records]
+
+        for item in result:
+            first_name = item.get('first_name', '') 
+            last_name = item.get('last_name', '')
+            prefix = item.get('prefix_name', '') 
+
+            item['student_fullname'] = f"{prefix}{first_name} {last_name}".strip()
+            item['nails_status'] = bool(item.get('nails_status')) if item.get('nails_status') is not None else None    
+            item['hair_status'] = bool(item.get('hair_status')) if item.get('hair_status') is not None else None
+            item['teeth_status'] = bool(item.get('teeth_status')) if item.get('teeth_status') is not None else None
+            item['body_status'] = bool(item.get('body_status')) if item.get('body_status') is not None else None
+            item['eye_status'] = bool(item.get('eye_status')) if item.get('eye_status') is not None else None    
+            item['ear_status'] = bool(item.get('ear_status')) if item.get('ear_status') is not None else None
+            item['nose_status'] = bool(item.get('nose_status')) if item.get('nose_status') is not None else None
+            
+            for key, value in item.items():
+                if isinstance(value, (datetime, date)):
+                    item[key] = value.isoformat()
+
+        return jsonify({"health_records": result}), 200
+    except Exception as e:
+        print("❌ ERROR:", e)
+        return jsonify({"error": str(e)}), 500
+    finally:
+        if cursor:
+            cursor.close()
+        if conn:
+            conn.close()
+
 
 # API Insert
 @health_records_bp.route("/health_records/insert", methods=["POST"])
@@ -333,3 +411,131 @@ def delete_health_record(health_id):
 def uploaded_file(filename):
     upload_folder = os.path.join(os.getcwd(), 'uploads')
     return send_from_directory(upload_folder, filename)
+
+
+@health_records_bp.route("/history_health_records", methods=["GET"])
+@jwt_required()
+def get_history_health_records():
+
+    claims = get_jwt()
+    user_id = claims["user_id"]
+
+    # params for search
+    student_code = request.args.get("student_code")
+    student_name = request.args.get("student_name")
+    date_from = request.args.get("date_from")
+    date_to = request.args.get("date_to")
+    attendance_status = request.args.get("attendance_status")
+
+    conn = None
+    cursor = None
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+
+        cursor.execute("SELECT teacher_id FROM users WHERE user_id = %s", (user_id,))
+        result_teacher = cursor.fetchone()
+
+        if not result_teacher:
+            return jsonify({"message": "Teacher not found"}), 404
+
+        teacher_id = result_teacher[0]
+
+        sql = """
+            SELECT 
+                s.student_id, s.student_code, s.prefix_name, s.first_name, s.last_name
+                , c.classroom_id, c.classroom_name, hr.health_id 
+                , hr.attendance_status, hr.record_date, hr.body_temperature
+                , hr.nails_status, hr.hair_status, hr.teeth_status
+                , hr.body_status, hr.eye_status, hr.ear_status
+                , hr.nose_status, hr.notes, hr.student_photo, hr.photo_path
+            FROM health_records hr 
+            LEFT JOIN students s on hr.student_id = s.student_id
+            LEFT JOIN class_history ch on s.student_id = ch.student_id
+            LEFT JOIN classroom_teachers ct on ch.classroom_id = ct.classroom_id
+            LEFT JOIN classrooms c on ct.classroom_id = c.classroom_id
+        """
+        params = []
+
+        sql += " WHERE ct.teacher_id = %s"
+        params.append(teacher_id)
+
+        if student_code:
+            sql += " AND s.student_code LIKE %s"
+            params.append(f"%{student_code}%")
+
+        if student_name:
+            sql += " AND (s.first_name LIKE %s OR s.last_name LIKE %s)"
+            params.append(f"%{student_name}%")
+            params.append(f"%{student_name}%")
+
+        if date_from and not date_to:
+            sql += " AND Date(hr.record_date) = %s"
+            params.append(date_from)
+
+        if date_to and not date_from:
+            sql += " AND Date(hr.record_date) = %s"
+            params.append(date_to)
+
+        if date_from and date_to:
+            sql += " AND Date(hr.record_date) BETWEEN %s AND %s"
+            params.append(date_from)
+            params.append(date_to)
+
+        if attendance_status:
+            sql += " AND hr.attendance_status = %s"
+            params.append(attendance_status)
+
+        sql += " ORDER BY hr.record_date DESC, s.student_code ASC"
+
+        cursor.execute(sql, params)
+
+        health_records = cursor.fetchall()
+
+        if not health_records:
+            return jsonify({"message": "ไม่พบข้อมูลตรวจสุขภาพ", "health_records": []}), 404
+
+        columns = [col[0] for col in cursor.description]
+        result = [dict(zip(columns, row)) for row in health_records]
+
+        for item in result:
+            first_name = item.get('first_name', '') 
+            last_name = item.get('last_name', '')
+            prefix = item.get('prefix_name', '') 
+
+            attendance_status = item.get('attendance_status') 
+            if attendance_status == "present":
+                item['attendance_status_name'] = "เข้าเรียน"
+            elif attendance_status == "home":
+                item['attendance_status_name'] = "กลับบ้าน"
+            elif attendance_status == "absent":
+                item['attendance_status_name'] = "ขาด"
+            elif attendance_status == "leave":
+                item['attendance_status_name'] = "ลา"
+            elif attendance_status == "sick":
+                item['attendance_status_name'] = "ป่วย"
+            else:
+                item['attendance_status_name'] = None
+
+            item['student_fullname'] = f"{prefix}{first_name} {last_name}".strip()
+            item['nails_status'] = bool(item.get('nails_status')) if item.get('nails_status') is not None else None    
+            item['hair_status'] = bool(item.get('hair_status')) if item.get('hair_status') is not None else None
+            item['teeth_status'] = bool(item.get('teeth_status')) if item.get('teeth_status') is not None else None
+            item['body_status'] = bool(item.get('body_status')) if item.get('body_status') is not None else None
+            item['eye_status'] = bool(item.get('eye_status')) if item.get('eye_status') is not None else None    
+            item['ear_status'] = bool(item.get('ear_status')) if item.get('ear_status') is not None else None
+            item['nose_status'] = bool(item.get('nose_status')) if item.get('nose_status') is not None else None
+            
+            for key, value in item.items():
+                if isinstance(value, (datetime, date)):
+                    item[key] = value.isoformat()
+
+        return jsonify({"health_records": result}), 200
+    except Exception as e:
+        print("❌ ERROR:", e)
+        return jsonify({"error": str(e)}), 500
+    finally:
+        if cursor:
+            cursor.close()
+        if conn:
+            conn.close()

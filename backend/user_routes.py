@@ -80,6 +80,7 @@ def insert_user():
     user_name = data.get("user_name")
     email = data.get("email")
     password = data.get("password")
+    teacher_id = data.get("teacher_id")
 
     if not user_name or not email or not password:
         return jsonify({"message": "Missing required fields"}), 400
@@ -97,9 +98,9 @@ def insert_user():
             return jsonify({"error": "Username already exists"}), 409
 
         cursor.execute("""
-            INSERT INTO users (user_name, password, email, created_date, created_by, updated_date)
-            VALUES (%s, %s, %s, NOW(), %s, NOW())
-        """, (user_name, hashed_password, email, created_by))
+            INSERT INTO users (user_name, password, email, created_date, created_by, updated_date, teacher_id)
+            VALUES (%s, %s, %s, NOW(), %s, NOW(), %s)
+        """, (user_name, hashed_password, email, created_by, teacher_id))
         conn.commit()
         return jsonify({"message": "User created successfully"}), 201
     except Exception as e:
@@ -122,6 +123,7 @@ def update_user(user_id):
     user_name = data.get("user_name")
     email = data.get("email")
     password = data.get("password")
+    teacher_id = data.get("teacher_id")
 
     if not user_name or not email:
         return jsonify({"message": "Missing required fields"}), 400
@@ -140,18 +142,20 @@ def update_user(user_id):
                     email = %s,
                     password = %s,
                     updated_date = NOW(),
-                    updated_by = %s
+                    updated_by = %s,
+                    teacher_id = %s
                 WHERE user_id = %s
-            """, (user_name, email, hashed_password, updated_by, user_id))
+            """, (user_name, email, hashed_password, updated_by, user_id, teacher_id))
         else:
             cursor.execute("""
                 UPDATE users
                 SET user_name = %s,
                     email = %s,
                     updated_date = NOW(),
-                    updated_by = %s
+                    updated_by = %s,
+                    teacher_id = %s
                 WHERE user_id = %s
-            """, (user_name, email, updated_by, user_id))
+            """, (user_name, email, updated_by, teacher_id, user_id))
 
         conn.commit()
         return jsonify({"message": "User updated successfully"}), 200

@@ -9,12 +9,12 @@
               <v-icon start>mdi-arrow-left</v-icon> กลับ
             </v-btn>
           </v-col>
-          <!-- <v-col cols="auto" class="pa-0 ml-3">
-            <v-btn color="success" @click="scanQR">
-              <v-icon start>mdi-qrcode-scan</v-icon>
-              Scan QR Code
+          <v-col cols="auto" class="pa-0 ml-3">
+            <v-btn color="blue-grey-lighten-2" @click="openHistoryRecord">
+              <v-icon start>mdi-history</v-icon>
+              ข้อมูลย้อนหลัง
             </v-btn>
-          </v-col> -->
+          </v-col>
         </v-row>
 
         <div style="height: 24px"></div>
@@ -531,7 +531,6 @@ const currentDateFormatted = ref("");
 
 // Data
 const healthRecords = ref([]);
-const teacherId = ref("5"); // TODO
 
 // Snackbar แจ้งเตือนสถานะ
 const snackbar = ref({
@@ -645,24 +644,19 @@ const formatThaiDate = (date) => {
 const fetchStudentHealthRecords = async () => {
   try {
     const token = localStorage.getItem("access_token");
-    const response = await axios.get(
-      `${API_BASE_URL}/student_health_records/${teacherId.value}`,
-      {
-        headers: { Authorization: `Bearer ${token}` },
-      }
-    );
-
-    //console.log("fetchStudentHealthRecords:", response.data);
-    
+    const response = await axios.get(`${API_BASE_URL}/student_health_records`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
     healthRecords.value = response.data.health_records || [];
   } catch (error) {
     console.error("โหลดข้อมูลนักเรียนล้มเหลว", error);
   }
 };
 
-// const scanQR = () => {
-//   console.log("Scan QR Code");
-// };
+const openHistoryRecord = () => {
+  console.log("historyRecord");
+  router.push({ name: "historyRecords", params: { type: "health" } });
+};
 
 const addHealth = (healthReacord) => {
   if (healthReacord.health_id) {

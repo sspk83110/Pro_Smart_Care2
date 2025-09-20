@@ -9,12 +9,12 @@
               <v-icon start>mdi-arrow-left</v-icon> กลับ
             </v-btn>
           </v-col>
-          <!-- <v-col cols="auto" class="pa-0 ml-3">
-            <v-btn color="success" @click="scanQR">
-              <v-icon start>mdi-qrcode-scan</v-icon>
-              Scan QR Code
+          <v-col cols="auto" class="pa-0 ml-3">
+            <v-btn color="blue-grey-lighten-2" @click="openHistoryRecord">
+              <v-icon start>mdi-history</v-icon>
+              ข้อมูลย้อนหลัง
             </v-btn>
-          </v-col> -->
+          </v-col>
         </v-row>
 
         <div style="height: 24px"></div>
@@ -451,11 +451,11 @@ const router = useRouter();
 const dialog = ref(false);
 const isEditing = ref(false);
 const search = ref("");
+
 const currentDateFormatted = ref("");
 
 // Data
 const behaviorRecords = ref([]);
-const teacherId = ref("5"); // TODO
 const completed = ref("บันทึกพฤติกรรมแล้ว");
 
 // Snackbar แจ้งเตือนสถานะ
@@ -529,26 +529,22 @@ const formatThaiDate = (date) => {
 const fetchStudentBehaviorRecords = async () => {
   try {
     const token = localStorage.getItem("access_token");
-
-
     const response = await axios.get(
-      `${API_BASE_URL}/student_behavior_records/${teacherId.value}`,
+      `${API_BASE_URL}/student_behavior_records`,
       {
         headers: { Authorization: `Bearer ${token}` },
       }
     );
-
-    // console.log("fetchStudentBehaviorRecords:", response.data);
-
     behaviorRecords.value = response.data.behavior_records || [];
   } catch (error) {
     console.error("โหลดข้อมูลนักเรียนล้มเหลว", error);
   }
 };
 
-// const scanQR = () => {
-//   console.log("Scan QR Code");
-// };
+const openHistoryRecord = () => {
+  console.log("historyRecord");
+  router.push({ name: "historyRecords", params: { type: "behavior" } });
+};
 
 const addBehavior = (behaviorReacord) => {
   if (behaviorReacord.behavior_id) {
@@ -646,17 +642,10 @@ const save = async () => {
 
 onMounted(() => {
   const token = localStorage.getItem("access_token");
-  const expiresAt = localStorage.getItem("expiresAt") 
-
-  // console.log("access_token: ", token);
-  // console.log("expiresAt: ", expiresAt);
-
-  //ถ้า ไม่มีทั้ง token และเวลาหมดอายุ → แสดงว่า user ยังไม่ได้ login หรือ token ถูกลบไปแล้ว
-  if (!token && !expiresAt) {
+  if (!token) {
     router.push("/login");
-    return; // หยุดการทำงานตรงนี้
+    return;
   }
-  //---- โค้ดด้านล่างจะไม่ทำงานถ้าไม่มี token && expiresAt ----
 
   fetchStudentBehaviorRecords();
 

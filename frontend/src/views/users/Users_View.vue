@@ -231,6 +231,20 @@
               />
             </v-col>
           </v-row>
+          <v-row>
+            <v-col cols="12" sm="6">
+              <v-select
+                v-model="record.teacher_id"
+                :items="teachers"
+                item-title="teacher_name"
+                item-value="teacher_id"
+                label="ครู"
+                variant="outlined"
+                color="success"
+                :rules="[required]"
+              />
+            </v-col>
+          </v-row>
         </v-card-text>
 
         <v-divider />
@@ -291,6 +305,9 @@ const DEFAULT_RECORD = {
 
 // ตัวแปรเก็บข้อมูลผู้ใช้ทั้งหมด (จาก API)
 const users = ref([]);
+
+// ตัวแปรเก็บครูทั้งหมด (จาก API)
+const teachers = ref([]);
 
 // ตัวแปรเก็บข้อมูลผู้ใช้ที่กำลังเพิ่ม/แก้ไข
 const record = ref({ ...DEFAULT_RECORD });
@@ -369,7 +386,7 @@ const showSnackbar = (message, type = "success") => {
 // เมื่อ component โหลดขึ้นมา
 onMounted(() => {
   const token = localStorage.getItem("access_token");
-  const expiresAt = localStorage.getItem("expiresAt") 
+  const expiresAt = localStorage.getItem("expiresAt");
 
   // console.log("access_token: ", token);
   // console.log("expiresAt: ", expiresAt);
@@ -381,6 +398,7 @@ onMounted(() => {
   }
   // ---- โค้ดด้านล่างจะไม่ทำงานถ้าไม่มี token && expiresAt ----
   fetchUsers();
+  fetchTeachers();
 });
 
 // ดึงข้อมูลผู้ใช้จาก API
@@ -401,7 +419,27 @@ const fetchUsers = async () => {
     showSnackbar("เกิดข้อผิดพลาดในการดึงข้อมูลผู้ใช้", "error");
 
     return router.push("/login");
-    
+  }
+};
+
+// ดึงข้อมูลครูจาก API
+const fetchTeachers = async () => {
+  try {
+    const token = localStorage.getItem("access_token");
+    const response = await axios.get(`${API_BASE_URL}/teachers_all`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+
+    const data = response.data.teachers || [];
+
+    teachers.value = data.map((t) => ({
+      ...t,
+      teacher_name: `${t.prefix_name || ""}${t.first_name || ""} ${
+        t.last_name || ""
+      }`,
+    }));
+  } catch (error) {
+    console.error("โหลดข้อมูลครูล้มเหลว", error);
   }
 };
 
@@ -463,6 +501,7 @@ async function save() {
     const payload = {
       user_name: record.value.user_name,
       email: record.value.email,
+      teacher_id: record.value.teacher_id,
     };
 
     // เพิ่มเฉพาะตอนเพิ่ม หรือกรอก password ใหม่
