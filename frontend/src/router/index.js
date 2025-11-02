@@ -4,6 +4,8 @@ import home from "../views/home/Home.vue";
 import home_view from "../views/home/Home_View.vue";
 import users from "../views/users/Users.vue";
 import users_view from "../views/users/Users_View.vue";
+import users_parents from "../views/users_parents/User_Parents.vue";
+import users_parents_view from "../views/users_parents/User_Parents_View.vue";
 import students from "../views/students/Sudents.vue";
 import students_view from "../views/students/Students_View.vue";
 import parents from "@/views/parents/Parents.vue";
@@ -55,12 +57,20 @@ const routes = [
     ],
   },
   {
-    path: "/users",
+    path: "/users_teacher",
     component: users,
     meta: {
       requiresAuth: true,
     }, // ต้องล็อกอิน
     children: [{ path: "", component: users_view }],
+  },
+  {
+    path: "/users_parents",
+    component: users_parents,
+    meta: {
+      requiresAuth: true,
+    }, // ต้องล็อกอิน
+    children: [{ path: "", component: users_parents_view }],
   },
   {
     path: "/students",

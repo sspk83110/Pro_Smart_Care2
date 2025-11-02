@@ -2,14 +2,7 @@
   <!-- บริการหลักในหน้า Home -->
   <v-container>
     <v-row class="mt-4" justify="center">
-      <v-col
-        v-for="service in services"
-        :key="service.index"
-        cols="12"
-        sm="6"
-        md="4"
-        lg="3"
-      >
+      <v-col v-for="service in services" :key="service.index" cols="12" sm="6" md="4" lg="3">
         <v-card class="mx-auto menu-bg" max-width="200" elevation="6">
           <v-card-actions class="justify-center">
             <v-icon dark size="48" :color="service.color">{{
@@ -20,11 +13,7 @@
           <v-card-title class="text-center">{{ service.name }}</v-card-title>
 
           <v-card-actions class="justify-center">
-            <v-btn
-              :to="service.router"
-              :color="service.color"
-              variant="elevated"
-            >
+            <v-btn :to="service.router" :color="service.color" variant="elevated">
               คลิก
             </v-btn>
           </v-card-actions>
@@ -41,7 +30,7 @@ const router = useRouter();
 
 onMounted(() => {
   const token = localStorage.getItem("access_token");
-  const expiresAt = localStorage.getItem("expiresAt") 
+  const expiresAt = localStorage.getItem("expiresAt")
 
   // console.log("access_token: ", token);
   // console.log("expiresAt: ", expiresAt);
@@ -104,7 +93,7 @@ const services = [
   //   icon: "mdi-bell",
   //   router: "",
   // },
-  
+
   {
     index: "8",
     name: "นักเรียน",
@@ -142,15 +131,22 @@ const services = [
   },
   {
     index: "13",
-    name: "สมาชิก",
-    color: "#00ff00",
-    icon: "mdi-account-group-outline",
-    router: "/users",
+    name: "สมาชิก (ครู)",
+    color: "#ff5800",
+    icon: "mdi-account-badge-outline",
+    router: "/users_teacher",
   },
   {
     index: "14",
-    name: "ตั้งค่า",
+    name: "สมาชิก (ผู้ปกครอง)",
     color: "#00ffff",
+    icon: "mdi-account-cowboy-hat-outline",
+    router: "/users_parents",
+  },
+  {
+    index: "15",
+    name: "ตั้งค่า",
+    color: "success",
     icon: "mdi-cog",
     router: "",
   },

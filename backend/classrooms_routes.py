@@ -220,7 +220,7 @@ def update_classrooms(classroom_id):
 
 
 
-# # ✅ ลบห้อง
+# ✅ ลบห้อง
 @classrooms_bp.route("/classrooms/delete/<int:classroom_id>", methods=["DELETE"])
 @jwt_required()
 def delete_classroom(classroom_id):

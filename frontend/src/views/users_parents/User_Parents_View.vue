@@ -14,8 +14,8 @@
         <v-col cols="auto" class="pa-0 ml-3">
           <!-- ปุ่มเพิ่มสมาชิก -->
           <v-btn color="green-darken-1" @click="add">
-            <v-icon start>mdi-account-badge-outline</v-icon>
-            เพิ่มข้อมูลสมาชิก (ครู)
+            <v-icon start>mdi-account-cowboy-hat-outline</v-icon>
+            เพิ่มข้อมูลสมาชิก (ผู้ปกครอง)
           </v-btn>
         </v-col>
       </v-row>
@@ -31,8 +31,8 @@
           <template v-slot:top>
             <v-toolbar flat class="bg-success text-white">
               <v-toolbar-title>
-                <v-icon icon="mdi-account-badge-outline" size="x-small" class="me-2" color="white" />
-                ตารางข้อมูลสมาชิก (ครู)
+                <v-icon icon="mdi-account-cowboy-hat-outline" size="x-small" class="me-2" color="white" />
+                ตารางข้อมูลสมาชิก (ผู้ปกครอง)
               </v-toolbar-title>
               <v-spacer></v-spacer>
               <!-- ช่องค้นหา -->
@@ -115,7 +115,7 @@
         <!-- Toolbar สีขึ้นอยู่กับสถานะเพิ่ม/แก้ไข -->
         <v-toolbar flat :color="isEditing ? 'warning' : 'success'">
           <v-card-title class="dialog-title text-white">
-            {{ isEditing ? " แก้ไขข้อมูลผู้ใช้ (ครู)" : " เพิ่มข้อมูลผู้ใช้ (ครู)" }}
+            {{ isEditing ? " แก้ไขข้อมูลผู้ใช้ (ผู้ปกครอง)" : " เพิ่มข้อมูลผู้ใช้ (ผู้ปกครอง)" }}
           </v-card-title>
         </v-toolbar>
         <!-- ฟอร์มข้อมูล -->
@@ -143,10 +143,12 @@
                 color="success" class="custom-input" :rules="isEditing ? [] : [required, passwordMatch]" />
             </v-col>
           </v-row>
+
+          <!-- ผู้ปกครอง -->
           <v-row>
             <v-col cols="12" sm="6">
-              <v-select v-model="record.teacher_id" :items="teachers" item-title="teacher_name" item-value="teacher_id"
-                label="ครู" variant="outlined" color="success" :rules="[required]" />
+              <v-select v-model="record.parents_id" :items="parents" item-title="parents_name" item-value="parents_id"
+                label="ผู้ปกครอง" variant="outlined" color="success" :rules="[required]" />
             </v-col>
           </v-row>
         </v-card-text>
@@ -197,7 +199,7 @@ const DEFAULT_RECORD = {
 const users = ref([]);
 
 // ตัวแปรเก็บครูทั้งหมด (จาก API)
-const teachers = ref([]);
+const parents = ref([]);
 
 // ตัวแปรเก็บข้อมูลผู้ใช้ที่กำลังเพิ่ม/แก้ไข
 const record = ref({ ...DEFAULT_RECORD });
@@ -284,27 +286,27 @@ onMounted(async () => {
   }
 
   // โหลดครูก่อน
-  await fetchTeachers();
+  await fetchParents();
 
   // โหลดผู้ใช้ทีหลัง
   await fetchUsers();
 });
 
 // ดึงข้อมูลครูจาก API
-const fetchTeachers = async () => {
+const fetchParents = async () => {
   try {
     const token = localStorage.getItem("access_token");
-    const response = await axios.get(`${API_BASE_URL}/teachers_all`, {
+    const response = await axios.get(`${API_BASE_URL}/parents_all`, {
       headers: { Authorization: `Bearer ${token}` },
     });
 
-    const data = response.data.teachers || [];
+    const data = response.data.parents || [];
 
     //console.log("data :", data)
 
-    teachers.value = data.map((t) => ({
+    parents.value = data.map((t) => ({
       ...t,
-      teacher_name: `${t.prefix_name || ""}${t.first_name || ""} ${t.last_name || ""}`, // สำหรับ dropdown
+      parents_name: `${t.prefix_name || ""}${t.first_name || ""} ${t.last_name || ""}`, // สำหรับ dropdown
     }));
 
 
@@ -317,11 +319,8 @@ const fetchTeachers = async () => {
 const fetchUsers = async () => {
   try {
     const token = localStorage.getItem("access_token");
-    // console.log("API token:", token);
-    const response = await axios.get(`${API_BASE_URL}/user`, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
+    const response = await axios.get(`${API_BASE_URL}/user/parents`, {
+      headers: { Authorization: `Bearer ${token}` },
     });
 
     // ดึง users
@@ -331,12 +330,12 @@ const fetchUsers = async () => {
     // ดึง users
     const usersData = response.data.users || [];
 
-    // แมป teacher_id → full_name
-    users.value = usersData.map(u => {
-      const teacher = teachers.value.find(t => t.teacher_id === u.teacher_id);
+    // ✅ แมป parents_id → parents_name จาก parents.value
+    users.value = usersData.map((u) => {
+      const found = parents.value.find((p) => p.parents_id === u.parents_id);
       return {
         ...u,
-        full_name: teacher ? teacher.full_name : "", // เพิ่ม full_name ของครู
+        full_name: found ? found.parents_name : "", // ← ใช้ parents_name แทน full_name
       };
     });
 
@@ -345,10 +344,11 @@ const fetchUsers = async () => {
   } catch (error) {
     console.error("Error fetching users:", error);
     showSnackbar("เกิดข้อผิดพลาดในการดึงข้อมูลผู้ใช้", "error");
-
-    return router.push("/login");
+    router.push("/login");
   }
 };
+
+
 
 // เตรียมเปิดฟอร์มเพิ่มข้อมูล
 function add() {
@@ -408,7 +408,7 @@ async function save() {
     const payload = {
       user_name: record.value.user_name,
       email: record.value.email,
-      teacher_id: record.value.teacher_id,
+      parents_id: record.value.parents_id,
     };
 
     // เพิ่มเฉพาะตอนเพิ่ม หรือกรอก password ใหม่
@@ -426,14 +426,14 @@ async function save() {
       // console.log("payload before update:", payload);
       // แก้ไข
       await axios.put(
-        `${API_BASE_URL}/user/update/${record.value.user_id}`, // ✅ URL ที่ถูกต้อง
+        `${API_BASE_URL}/user/parents/update/${record.value.user_id}`, // ✅ URL ที่ถูกต้อง
         payload,
         config
       );
       showSnackbar("แก้ไขผู้ใช้สำเร็จ!", "success");
     } else {
       // เพิ่ม
-      await axios.post(`${API_BASE_URL}/user/insert`, payload, config);
+      await axios.post(`${API_BASE_URL}/user/parents/insert`, payload, config);
       showSnackbar("เพิ่มผู้ใช้สำเร็จ!", "success");
     }
 
@@ -477,7 +477,7 @@ const goBack = () => {
 const headers = [
   { title: "ลำดับ", key: "num", sortable: false },
   { title: "ชื่อผู้ใช้", key: "user_name" },
-  { title: "ชื่อครู", key: "full_name" },
+  { title: "ชื่อ (ผู้ปกครอง)", key: "full_name" },
   { title: "อีเมล", key: "email" },
   { title: "วันที่อัปเดต", key: "updated_date" },
   { title: "แก้ไข", key: "edit", align: "center", sortable: false },

@@ -20,47 +20,26 @@
 
       <!-- ตารางแสดงข้อมูลนักเรียน -->
       <v-sheet rounded>
-        <v-data-table
-          :headers="headers"
-          :items="students"
-          :items-per-page="10"
-          :search="search"
-          class="custom-table custom-footer"
-        >
+        <v-data-table :headers="headers" :items="students" :items-per-page="10" :search="search"
+          class="custom-table custom-footer">
           <!-- ส่วนหัวตาราง -->
           <template v-slot:top>
             <v-toolbar flat class="bg-success text-white">
               <v-toolbar-title>
-                <v-icon
-                  icon="mdi-account-school-outline"
-                  size="x-small"
-                  class="me-2"
-                  color="white"
-                />
+                <v-icon icon="mdi-account-school-outline" size="x-small" class="me-2" color="white" />
                 ตารางข้อมูลนักเรียน
               </v-toolbar-title>
               <v-spacer></v-spacer>
               <!-- ช่องค้นหา -->
-              <v-text-field
-                v-model="search"
-                label="ค้นหา"
-                clearable
-                variant="outlined"
-                hide-details
-                density="compact"
-                style="max-width: 300px"
-              />
+              <v-text-field v-model="search" label="ค้นหา" clearable variant="outlined" hide-details density="compact"
+                style="max-width: 300px" />
             </v-toolbar>
           </template>
 
           <!-- ส่วนหัวคอลัมน์ -->
           <template v-slot:header="{ headers }">
             <tr>
-              <th
-                v-for="header in headers"
-                :key="header.key"
-                style="background-color: #43a047; color: white"
-              >
+              <th v-for="header in headers" :key="header.key" style="background-color: #43a047; color: white">
                 {{ header.title }}
               </th>
             </tr>
@@ -68,11 +47,9 @@
 
           <!-- ข้อมูลแต่ละแถว -->
           <template v-slot:item="{ item, index }">
-            <tr
-              :style="{
-                backgroundColor: index % 2 === 0 ? '#e8f5e9' : '#ffffff',
-              }"
-            >
+            <tr :style="{
+              backgroundColor: index % 2 === 0 ? '#e8f5e9' : '#ffffff',
+            }">
               <td style="color: black">{{ index + 1 }}</td>
               <td style="color: black">{{ item.student_code }}</td>
               <td style="color: black">{{ item.full_name }}</td>
@@ -89,41 +66,22 @@
               </td>
               <!-- ปุ่มดู -->
               <td class="text-center">
-                <v-avatar
-                  color="green darken-2"
-                  size="32"
-                  class="elevation-1"
-                  style="cursor: pointer"
-                  @click="viewStudent(item)"
-                >
-                  <v-icon
-                    color="white"
-                    icon="mdi-eye-arrow-right-outline"
-                    size="20"
-                  />
+                <v-avatar color="green darken-2" size="32" class="elevation-1" style="cursor: pointer"
+                  @click="viewStudent(item)">
+                  <v-icon color="white" icon="mdi-eye-arrow-right-outline" size="20" />
                 </v-avatar>
               </td>
               <!-- ปุ่มแก้ไข -->
               <td class="text-center">
-                <v-avatar
-                  color="yellow darken-2"
-                  size="32"
-                  class="elevation-1"
-                  style="cursor: pointer"
-                  @click="editStudent(item)"
-                >
+                <v-avatar color="yellow darken-2" size="32" class="elevation-1" style="cursor: pointer"
+                  @click="editStudent(item)">
                   <v-icon color="white" icon="mdi-pencil" size="20" />
                 </v-avatar>
               </td>
               <!-- ปุ่มลบ -->
               <td class="text-center">
-                <v-avatar
-                  color="red darken-1"
-                  size="32"
-                  class="elevation-1"
-                  style="cursor: pointer"
-                  @click="confirmRemove(item.student_id)"
-                >
+                <v-avatar color="red darken-1" size="32" class="elevation-1" style="cursor: pointer"
+                  @click="confirmRemove(item.student_id)">
                   <v-icon color="white" icon="mdi-delete" size="20" />
                 </v-avatar>
               </td>
@@ -136,30 +94,15 @@
     <!-- Dialog ยืนยันการลบผู้นักเรียน -->
     <v-dialog v-model="confirmDeleteDialog" max-width="400">
       <v-card class="confirm-delete-dialog">
-        <v-card-title class="text-h6 confirm-delete-title"
-          >ยืนยันการลบ</v-card-title
-        >
-        <v-card-text class="confirm-delete-text"
-          >คุณต้องการลบนักเรียนคนนี้ใช่หรือไม่?</v-card-text
-        >
+        <v-card-title class="text-h6 confirm-delete-title">ยืนยันการลบ</v-card-title>
+        <v-card-text class="confirm-delete-text">คุณต้องการลบนักเรียนคนนี้ใช่หรือไม่?</v-card-text>
         <v-card-actions class="confirm-delete-actions">
           <v-spacer />
           <!-- ปุ่มยกเลิก -->
-          <v-btn
-            color="red-darken-1"
-            variant="flat"
-            class="text-white"
-            @click="confirmDeleteDialog = false"
-            >ยกเลิก</v-btn
-          >
+          <v-btn color="red-darken-1" variant="flat" class="text-white"
+            @click="confirmDeleteDialog = false">ยกเลิก</v-btn>
           <!-- ปุ่มยืนยันลบ -->
-          <v-btn
-            color="green-darken-1"
-            variant="flat"
-            class="text-white"
-            @click="confirmDelete"
-            >ลบ</v-btn
-          >
+          <v-btn color="green-darken-1" variant="flat" class="text-white" @click="confirmDelete">ลบ</v-btn>
         </v-card-actions>
       </v-card>
     </v-dialog>
@@ -178,143 +121,74 @@
           <v-row>
             <!-- คำนำหน้า -->
             <v-col cols="12" sm="4">
-              <v-select
-                v-model="record.prefix_name"
-                :items="['เด็กชาย', 'เด็กหญิง']"
-                label="คำนำหน้า"
-                variant="outlined"
-                color="success"
-                :rules="[required]"
-              />
+              <v-select v-model="record.prefix_name" :items="['เด็กชาย', 'เด็กหญิง']" label="คำนำหน้า"
+                variant="outlined" color="success" :rules="[required]" />
             </v-col>
 
             <!-- รหัสนักเรียน -->
             <v-col cols="12" sm="4">
-              <v-text-field
-                v-model="record.student_code"
-                label="รหัสนักเรียน"
-                variant="outlined"
-                color="success"
-                :rules="[required, idStudent_code]"
-              />
+              <v-text-field v-model="record.student_code" label="รหัสนักเรียน" variant="outlined" color="success"
+                :rules="[required, idStudent_code]" />
             </v-col>
 
             <!-- เลขบัตรประชาชน -->
             <v-col cols="12" sm="4">
-              <v-text-field
-                v-model="record.id_card_number"
-                label="เลขบัตรประชาชน"
-                variant="outlined"
-                color="success"
-                :rules="[required, idCardRule]"
-              />
+              <v-text-field v-model="record.id_card_number" label="เลขบัตรประชาชน" variant="outlined" color="success"
+                :rules="[required, idCardRule]" />
             </v-col>
 
             <!-- ชื่อ -->
             <v-col cols="12" sm="6">
-              <v-text-field
-                v-model="record.first_name"
-                label="ชื่อ"
-                variant="outlined"
-                color="success"
-                :rules="[required]"
-              />
+              <v-text-field v-model="record.first_name" label="ชื่อ" variant="outlined" color="success"
+                :rules="[required]" />
             </v-col>
 
             <!-- นามสกุล -->
             <v-col cols="12" sm="6">
-              <v-text-field
-                v-model="record.last_name"
-                label="นามสกุล"
-                variant="outlined"
-                color="success"
-                :rules="[required]"
-              />
+              <v-text-field v-model="record.last_name" label="นามสกุล" variant="outlined" color="success"
+                :rules="[required]" />
             </v-col>
 
             <!-- ชื่อเล่น -->
             <v-col cols="12" sm="6">
-              <v-text-field
-                v-model="record.nickname"
-                label="ชื่อเล่น"
-                variant="outlined"
-                color="success"
-              />
+              <v-text-field v-model="record.nickname" label="ชื่อเล่น" variant="outlined" color="success" />
             </v-col>
 
             <!-- เพศ -->
             <v-col cols="12" sm="4">
-              <v-select
-                v-model="record.gender"
-                :items="['ชาย', 'หญิง']"
-                label="เพศ"
-                variant="outlined"
-                color="success"
-              />
+              <v-select v-model="record.gender" :items="['ชาย', 'หญิง']" label="เพศ" variant="outlined"
+                color="success" />
             </v-col>
             <!-- หมู่เลือด -->
             <v-col cols="12" sm="2">
-              <v-select
-                v-model="record.blood_group"
-                :items="['A', 'B', 'AB', 'O']"
-                label="หมู่เลือด"
-                variant="outlined"
-                color="success"
-              />
+              <v-select v-model="record.blood_group" :items="['A', 'B', 'AB', 'O']" label="หมู่เลือด" variant="outlined"
+                color="success" />
             </v-col>
             <!-- วันเกิด -->
             <v-col cols="12" sm="5">
-              <v-menu
-                v-model="showDatePicker"
-                :close-on-content-click="false"
-                transition="scale-transition"
-                offset-y
-                min-width="auto"
-              >
+              <v-menu v-model="showDatePicker" :close-on-content-click="false" transition="scale-transition" offset-y
+                min-width="auto">
                 <template v-slot:activator="{ props }">
-                  <v-text-field
-                    :model-value="formatThaiDate(record.birth_date)"
-                    label="วันเกิด"
-                    prepend-inner-icon="mdi-calendar"
-                    readonly
-                    v-bind="props"
-                    variant="outlined"
-                    clearable
-                    @click:clear="clearBirthDate"
-                  ></v-text-field>
+                  <v-text-field :model-value="formatThaiDate(record.birth_date)" label="วันเกิด"
+                    prepend-inner-icon="mdi-calendar" readonly v-bind="props" variant="outlined" clearable
+                    @click:clear="clearBirthDate"></v-text-field>
                 </template>
-                <v-date-picker
-                  v-model="birthDateModel"
-                  @update:modelValue="handleDateSelect"
-                  locale="th"
-                  :first-day-of-week="0"
-                  :max="new Date().toISOString().split('T')[0]"
-                ></v-date-picker>
+                <v-date-picker v-model="birthDateModel" @update:modelValue="handleDateSelect" locale="th"
+                  :first-day-of-week="0" :max="new Date().toISOString().split('T')[0]"></v-date-picker>
               </v-menu>
             </v-col>
             <!-- อายุ -->
             <v-col cols="12" sm="4">
-              <v-text-field
-                :value="
-                  'อายุ' +
-                  ' ' +
-                  calculateAge(record.birth_date) +
-                  (calculateAge(record.birth_date) ? '' : '')
-                "
-                readonly
-                variant="outlined"
-                color="success"
-              />
+              <v-text-field :value="'อายุ' +
+                ' ' +
+                calculateAge(record.birth_date) +
+                (calculateAge(record.birth_date) ? '' : '')
+                " readonly variant="outlined" color="success" />
             </v-col>
             <!-- สถานะการเรียน -->
             <v-col cols="12" sm="3">
-              <v-checkbox
-                v-model="record.is_active"
-                label="สถานะศึกษาอยู่"
-                :true-value="1"
-                :false-value="0"
-                color="success"
-              />
+              <v-checkbox v-model="record.is_active" label="สถานะศึกษาอยู่" :true-value="1" :false-value="0"
+                color="success" />
             </v-col>
 
             <!-- ที่อยู่ตามทะเบียนบ้าน -->
@@ -328,47 +202,22 @@
                 <v-card-text>
                   <v-row>
                     <v-col cols="12" sm="12">
-                      <v-text-field
-                        v-model="record.permanant_address"
-                        label="เลขที่"
-                        variant="outlined"
-                        color="success"
-                      />
+                      <v-text-field v-model="record.permanant_address" label="เลขที่" variant="outlined"
+                        color="success" />
                     </v-col>
                     <v-col cols="12" sm="4">
-                      <v-select
-                        v-model="selectedProvinceCodePermanent"
-                        :items="provinces"
-                        item-title="provinceNameTh"
-                        item-value="provinceCode"
-                        label="จังหวัด"
-                        variant="outlined"
-                        color="success"
-                      />
+                      <v-select v-model="selectedProvinceCodePermanent" :items="provinces" item-title="provinceNameTh"
+                        item-value="provinceCode" label="จังหวัด" variant="outlined" color="success" />
                     </v-col>
                     <v-col cols="12" sm="4">
-                      <v-select
-                        v-model="selectedDistrictCodePermanent"
-                        :items="filteredDistrictsPermanent"
-                        item-title="districtNameTh"
-                        item-value="districtCode"
-                        label="อำเภอ/เขต"
-                        variant="outlined"
-                        color="success"
-                        :disabled="!selectedProvinceCodePermanent"
-                      />
+                      <v-select v-model="selectedDistrictCodePermanent" :items="filteredDistrictsPermanent"
+                        item-title="districtNameTh" item-value="districtCode" label="อำเภอ/เขต" variant="outlined"
+                        color="success" :disabled="!selectedProvinceCodePermanent" />
                     </v-col>
                     <v-col cols="12" sm="4">
-                      <v-select
-                        v-model="selectedSubdistrictCodePermanent"
-                        :items="filteredSubdistrictsPermanent"
-                        item-title="subdistrictNameTh"
-                        item-value="subdistrictCode"
-                        label="ตำบล/แขวง"
-                        variant="outlined"
-                        color="success"
-                        :disabled="!selectedDistrictCodePermanent"
-                      />
+                      <v-select v-model="selectedSubdistrictCodePermanent" :items="filteredSubdistrictsPermanent"
+                        item-title="subdistrictNameTh" item-value="subdistrictCode" label="ตำบล/แขวง" variant="outlined"
+                        color="success" :disabled="!selectedDistrictCodePermanent" />
                     </v-col>
                   </v-row>
 
@@ -391,47 +240,22 @@
                 <v-card-text>
                   <v-row>
                     <v-col cols="12" sm="12">
-                      <v-text-field
-                        v-model="record.present_address"
-                        label="เลขที่"
-                        variant="outlined"
-                        color="success"
-                      />
+                      <v-text-field v-model="record.present_address" label="เลขที่" variant="outlined"
+                        color="success" />
                     </v-col>
                     <v-col cols="12" sm="4">
-                      <v-select
-                        v-model="selectedProvinceCodePresent"
-                        :items="provinces"
-                        item-title="provinceNameTh"
-                        item-value="provinceCode"
-                        label="จังหวัด"
-                        variant="outlined"
-                        color="success"
-                      />
+                      <v-select v-model="selectedProvinceCodePresent" :items="provinces" item-title="provinceNameTh"
+                        item-value="provinceCode" label="จังหวัด" variant="outlined" color="success" />
                     </v-col>
                     <v-col cols="12" sm="4">
-                      <v-select
-                        v-model="selectedDistrictCodePresent"
-                        :items="filteredDistrictsPresent"
-                        item-title="districtNameTh"
-                        item-value="districtCode"
-                        label="อำเภอ/เขต"
-                        variant="outlined"
-                        color="success"
-                        :disabled="!selectedProvinceCodePresent"
-                      />
+                      <v-select v-model="selectedDistrictCodePresent" :items="filteredDistrictsPresent"
+                        item-title="districtNameTh" item-value="districtCode" label="อำเภอ/เขต" variant="outlined"
+                        color="success" :disabled="!selectedProvinceCodePresent" />
                     </v-col>
                     <v-col cols="12" sm="4">
-                      <v-select
-                        v-model="selectedSubdistrictCodePresent"
-                        :items="filteredSubdistrictsPresent"
-                        item-title="subdistrictNameTh"
-                        item-value="subdistrictCode"
-                        label="ตำบล/แขวง"
-                        variant="outlined"
-                        color="success"
-                        :disabled="!selectedDistrictCodePresent"
-                      />
+                      <v-select v-model="selectedSubdistrictCodePresent" :items="filteredSubdistrictsPresent"
+                        item-title="subdistrictNameTh" item-value="subdistrictCode" label="ตำบล/แขวง" variant="outlined"
+                        color="success" :disabled="!selectedDistrictCodePresent" />
                     </v-col>
                   </v-row>
                   <!-- ส่วนแสดงที่อยู่ที่เลือก -->
@@ -441,13 +265,8 @@
                     </div>
 
                     <!-- เพิ่มปุ่มใช้ที่อยู่เดียวกับทะเบียนบ้าน -->
-                    <v-btn
-                      color="success"
-                      variant="tonal"
-                      @click="useSameAsPermanentAddress"
-                      class="mt-2"
-                      :disabled="!selectedFullAddressPermanent"
-                    >
+                    <v-btn color="success" variant="tonal" @click="useSameAsPermanentAddress" class="mt-2"
+                      :disabled="!selectedFullAddressPermanent">
                       <v-icon icon="mdi-content-copy" class="mr-2"></v-icon>
                       ใช้ที่อยู่เดียวกับทะเบียนบ้าน
                     </v-btn>
@@ -467,37 +286,18 @@
                   <v-row>
                     <!-- ละติจูด -->
                     <v-col cols="12" sm="6">
-                      <v-text-field
-                        v-model="record.latitude"
-                        label="ละติจูด (Latitude)"
-                        variant="outlined"
-                        color="success"
-                        type="number"
-                        step="0.000001"
-                        :rules="[latitudeRule]"
-                      />
+                      <v-text-field v-model="record.latitude" label="ละติจูด (Latitude)" variant="outlined"
+                        color="success" type="number" step="0.000001" :rules="[latitudeRule]" />
                     </v-col>
                     <!-- ลองติจูด -->
                     <v-col cols="12" sm="6">
-                      <v-text-field
-                        v-model="record.longitude"
-                        label="ลองติจูด (Longitude)"
-                        variant="outlined"
-                        color="success"
-                        type="number"
-                        step="0.000001"
-                        :rules="[longitudeRule]"
-                      />
+                      <v-text-field v-model="record.longitude" label="ลองติจูด (Longitude)" variant="outlined"
+                        color="success" type="number" step="0.000001" :rules="[longitudeRule]" />
                     </v-col>
                   </v-row>
                   <div class="text-center mt-2">
                     <!-- ปุ่มเปิดแผนที่ -->
-                    <v-btn
-                      color="success"
-                      variant="tonal"
-                      @click="openMapPicker"
-                      :disabled="!record"
-                    >
+                    <v-btn color="success" variant="tonal" @click="openMapPicker" :disabled="!record">
                       <v-icon icon="mdi-map" class="mr-2"></v-icon>
                       {{
                         record.latitude && record.longitude
@@ -512,37 +312,19 @@
 
             <!-- รูปภาพนักเรียน -->
             <v-col cols="12" sm="12">
-              <v-file-input
-                label="เลือกรูปภาพนักเรียน"
-                accept="image/*"
-                variant="outlined"
-                color="success"
-                prepend-icon="mdi-camera"
-                @change="handleImageUpload"
-                clearable
-                @click:clear="removeImage"
-              />
+              <v-file-input label="เลือกรูปภาพนักเรียน" accept="image/*" variant="outlined" color="success"
+                prepend-icon="mdi-camera" @change="handleImageUpload" clearable @click:clear="removeImage" />
 
               <!-- แสดงภาพตัวอย่าง หากเลือกใหม่ -->
               <div v-if="imagePreview" class="mt-2 text-center">
-                <v-img
-                  :src="imagePreview"
-                  max-width="250"
-                  max-height="250"
-                  class="mx-auto"
-                  style="border-radius: 12px; border: 1px solid #ccc"
-                />
+                <v-img :src="imagePreview" max-width="250" max-height="250" class="mx-auto"
+                  style="border-radius: 12px; border: 1px solid #ccc" />
               </div>
 
               <!-- แสดงภาพจากฐานข้อมูล หากยังไม่มี preview -->
               <div v-else-if="record?.student_photo" class="mt-2 text-center">
-                <v-img
-                  :src="getStudentImageUrl(record.student_photo)"
-                  max-width="250"
-                  max-height="250"
-                  class="mx-auto"
-                  style="border-radius: 12px; border: 1px solid #ccc"
-                />
+                <v-img :src="getStudentImageUrl(record.student_photo)" max-width="250" max-height="250" class="mx-auto"
+                  style="border-radius: 12px; border: 1px solid #ccc" />
               </div>
 
               <!-- fallback ถ้าไม่มีภาพเลย -->
@@ -557,17 +339,9 @@
 
         <!-- ปุ่มควบคุมฟอร์ม -->
         <v-card-actions class="justify-end">
-          <v-btn color="red darken-1" variant="flat" @click="dialog = false"
-            >ยกเลิก</v-btn
-          >
-          <v-btn
-            color="green darken-1"
-            variant="flat"
-            class="text-white ml-2"
-            :disabled="!isStudentFormValid"
-            @click="save"
-            >บันทึก</v-btn
-          >
+          <v-btn color="red darken-1" variant="flat" @click="dialog = false">ยกเลิก</v-btn>
+          <v-btn color="green darken-1" variant="flat" class="text-white ml-2" :disabled="!isStudentFormValid"
+            @click="save">บันทึก</v-btn>
         </v-card-actions>
       </v-card>
     </v-dialog>
@@ -588,24 +362,14 @@
             <v-col cols="12" sm="12">
               <!-- แสดงภาพตัวอย่าง หากเลือกใหม่ -->
               <div v-if="imagePreview" class="mt-2 text-center">
-                <v-img
-                  :src="imagePreview"
-                  max-width="250"
-                  max-height="250"
-                  class="mx-auto"
-                  style="border-radius: 12px; border: 1px solid #ccc"
-                />
+                <v-img :src="imagePreview" max-width="250" max-height="250" class="mx-auto"
+                  style="border-radius: 12px; border: 1px solid #ccc" />
               </div>
 
               <!-- แสดงภาพจากฐานข้อมูล หากยังไม่มี preview -->
               <div v-else-if="record?.student_photo" class="mt-2 text-center">
-                <v-img
-                  :src="getStudentImageUrl(record.student_photo)"
-                  max-width="250"
-                  max-height="250"
-                  class="mx-auto"
-                  style="border-radius: 12px; border: 1px solid #ccc"
-                />
+                <v-img :src="getStudentImageUrl(record.student_photo)" max-width="250" max-height="250" class="mx-auto"
+                  style="border-radius: 12px; border: 1px solid #ccc" />
               </div>
 
               <!-- fallback ถ้าไม่มีภาพเลย -->
@@ -615,154 +379,74 @@
             </v-col>
             <!-- คำนำหน้า -->
             <v-col cols="12" sm="4">
-              <v-text-field
-                v-model="record.prefix_name"
-                :items="['เด็กชาย', 'เด็กหญิง']"
-                label="คำนำหน้า"
-                variant="outlined"
-                color="success"
-                disabled
-                :rules="[required]"
-              />
+              <v-text-field v-model="record.prefix_name" :items="['เด็กชาย', 'เด็กหญิง']" label="คำนำหน้า"
+                variant="outlined" color="success" disabled :rules="[required]" />
             </v-col>
 
             <!-- รหัสนักเรียน -->
             <v-col cols="12" sm="4">
-              <v-text-field
-                v-model="record.student_code"
-                label="รหัสนักเรียน"
-                variant="outlined"
-                color="success"
-                disabled
-                :rules="[required, idStudent_code]"
-              />
+              <v-text-field v-model="record.student_code" label="รหัสนักเรียน" variant="outlined" color="success"
+                disabled :rules="[required, idStudent_code]" />
             </v-col>
 
             <!-- เลขบัตรประชาชน -->
             <v-col cols="12" sm="4">
-              <v-text-field
-                v-model="record.id_card_number"
-                label="เลขบัตรประชาชน"
-                variant="outlined"
-                color="success"
-                disabled
-                :rules="[required, idCardRule]"
-              />
+              <v-text-field v-model="record.id_card_number" label="เลขบัตรประชาชน" variant="outlined" color="success"
+                disabled :rules="[required, idCardRule]" />
             </v-col>
 
             <!-- ชื่อ -->
             <v-col cols="12" sm="6">
-              <v-text-field
-                v-model="record.first_name"
-                label="ชื่อ"
-                variant="outlined"
-                color="success"
-                disabled
-                :rules="[required]"
-              />
+              <v-text-field v-model="record.first_name" label="ชื่อ" variant="outlined" color="success" disabled
+                :rules="[required]" />
             </v-col>
 
             <!-- นามสกุล -->
             <v-col cols="12" sm="6">
-              <v-text-field
-                v-model="record.last_name"
-                label="นามสกุล"
-                variant="outlined"
-                color="success"
-                disabled
-                :rules="[required]"
-              />
+              <v-text-field v-model="record.last_name" label="นามสกุล" variant="outlined" color="success" disabled
+                :rules="[required]" />
             </v-col>
 
             <!-- ชื่อเล่น -->
             <v-col cols="12" sm="6">
-              <v-text-field
-                v-model="record.nickname"
-                label="ชื่อเล่น"
-                variant="outlined"
-                color="success"
-                disabled
-              />
+              <v-text-field v-model="record.nickname" label="ชื่อเล่น" variant="outlined" color="success" disabled />
             </v-col>
 
             <!-- เพศ -->
             <v-col cols="12" sm="4">
-              <v-text-field
-                v-model="record.gender"
-                :items="['ชาย', 'หญิง']"
-                label="เพศ"
-                variant="outlined"
-                color="success"
-                disabled
-              />
+              <v-text-field v-model="record.gender" :items="['ชาย', 'หญิง']" label="เพศ" variant="outlined"
+                color="success" disabled />
             </v-col>
             <!-- หมู่เลือด -->
             <v-col cols="12" sm="2">
-              <v-text-field
-                v-model="record.blood_group"
-                :items="['A', 'B', 'AB', 'O']"
-                label="หมู่เลือด"
-                variant="outlined"
-                color="success"
-                disabled
-              />
+              <v-text-field v-model="record.blood_group" :items="['A', 'B', 'AB', 'O']" label="หมู่เลือด"
+                variant="outlined" color="success" disabled />
             </v-col>
             <!-- วันเกิด -->
             <v-col cols="12" sm="5">
-              <v-menu
-                v-model="showDatePicker"
-                :close-on-content-click="false"
-                transition="scale-transition"
-                offset-y
-                min-width="auto"
-              >
+              <v-menu v-model="showDatePicker" :close-on-content-click="false" transition="scale-transition" offset-y
+                min-width="auto">
                 <template v-slot:activator="{ props }">
-                  <v-text-field
-                    :model-value="formatThaiDate(record.birth_date)"
-                    label="วันเกิด"
-                    prepend-inner-icon="mdi-calendar"
-                    readonly
-                    v-bind="props"
-                    variant="outlined"
-                    clearable
-                    @click:clear="clearBirthDate"
-                    disabled
-                  ></v-text-field>
+                  <v-text-field :model-value="formatThaiDate(record.birth_date)" label="วันเกิด"
+                    prepend-inner-icon="mdi-calendar" readonly v-bind="props" variant="outlined" clearable
+                    @click:clear="clearBirthDate" disabled></v-text-field>
                 </template>
-                <v-date-picker
-                  v-model="birthDateModel"
-                  @update:modelValue="handleDateSelect"
-                  locale="th"
-                  :first-day-of-week="0"
-                  :max="new Date().toISOString().split('T')[0]"
-                ></v-date-picker>
+                <v-date-picker v-model="birthDateModel" @update:modelValue="handleDateSelect" locale="th"
+                  :first-day-of-week="0" :max="new Date().toISOString().split('T')[0]"></v-date-picker>
               </v-menu>
             </v-col>
             <!-- อายุ -->
             <v-col cols="12" sm="4">
-              <v-text-field
-                :value="
-                  'อายุ' +
-                  ' ' +
-                  calculateAge(record.birth_date) +
-                  (calculateAge(record.birth_date) ? '' : '')
-                "
-                readonly
-                variant="outlined"
-                color="success"
-                disabled
-              />
+              <v-text-field :value="'อายุ' +
+                ' ' +
+                calculateAge(record.birth_date) +
+                (calculateAge(record.birth_date) ? '' : '')
+                " readonly variant="outlined" color="success" disabled />
             </v-col>
             <!-- สถานะการเรียน -->
             <v-col cols="12" sm="3">
-              <v-checkbox
-                v-model="record.is_active"
-                label="สถานะศึกษาอยู่"
-                :true-value="1"
-                :false-value="0"
-                color="success"
-                disabled
-              />
+              <v-checkbox v-model="record.is_active" label="สถานะศึกษาอยู่" :true-value="1" :false-value="0"
+                color="success" disabled />
             </v-col>
 
             <!-- ที่อยู่ตามทะเบียนบ้าน -->
@@ -797,29 +481,13 @@
                   <v-row>
                     <!-- ละติจูด -->
                     <v-col cols="12" sm="6">
-                      <v-text-field
-                        v-model="record.latitude"
-                        label="ละติจูด (Latitude)"
-                        variant="outlined"
-                        color="success"
-                        disabled
-                        type="number"
-                        step="0.000001"
-                        :rules="[latitudeRule]"
-                      />
+                      <v-text-field v-model="record.latitude" label="ละติจูด (Latitude)" variant="outlined"
+                        color="success" disabled type="number" step="0.000001" :rules="[latitudeRule]" />
                     </v-col>
                     <!-- ลองติจูด -->
                     <v-col cols="12" sm="6">
-                      <v-text-field
-                        v-model="record.longitude"
-                        label="ลองติจูด (Longitude)"
-                        variant="outlined"
-                        color="success"
-                        disabled
-                        type="number"
-                        step="0.000001"
-                        :rules="[longitudeRule]"
-                      />
+                      <v-text-field v-model="record.longitude" label="ลองติจูด (Longitude)" variant="outlined"
+                        color="success" disabled type="number" step="0.000001" :rules="[longitudeRule]" />
                     </v-col>
                   </v-row>
                 </v-card-text>
@@ -832,12 +500,7 @@
 
         <!-- ปุ่มควบคุมฟอร์ม -->
         <v-card-actions class="justify-end">
-          <v-btn
-            color="green darken-1"
-            variant="flat"
-            @click="students_Popup = false"
-            >ตกลง</v-btn
-          >
+          <v-btn color="green darken-1" variant="flat" @click="students_Popup = false">ตกลง</v-btn>
         </v-card-actions>
       </v-card>
     </v-dialog>
@@ -850,24 +513,17 @@
             เลือกตำแหน่งบนแผนที่
           </v-toolbar-title>
           <v-spacer></v-spacer>
-          <v-btn icon @click="mapDialog = false">
+          <v-btn icon @click="mapDialog = true">
             <v-icon color="white">mdi-close</v-icon>
           </v-btn>
         </v-toolbar>
         <v-card-text style="height: calc(100vh - 120px); padding: 0">
           <!-- องค์ประกอบแผนที่ OpenLayers   id="map" -->
-          <div
-            ref="mapRef"
-            style="width: 100%; height: 100%; position: relative"
-          >
+          <div ref="mapRef" style="width: 100%; height: 100%; position: relative">
             <!-- ปุ่มสลับแผนที่ -->
-            <v-btn
-              icon
-              class="map-toggle-btn"
-              @click="toggleMapType"
+            <v-btn icon class="map-toggle-btn" @click="toggleMapType"
               style="position: absolute; top: 10px; right: 10px; z-index: 999"
-              :title="isSatellite ? 'Street View' : 'Satellite View'"
-            >
+              :title="isSatellite ? 'Street View' : 'Satellite View'">
               <v-icon>{{ isSatellite ? "mdi-map" : "mdi-earth" }}</v-icon>
             </v-btn>
           </div>
@@ -875,12 +531,23 @@
           <div class="map-coordinate-display pa-2">
             <v-chip class="ma-1" color="primary">
               <v-icon start>mdi-crosshairs-gps</v-icon>
+              ละติจูด:
+              {{ typeof mapLatitude === 'number' ? mapLatitude.toFixed(6) : "N/A" }}
+            </v-chip>
+
+            <v-chip class="ma-1" color="primary">
+              <v-icon start>mdi-crosshairs-gps</v-icon>
+              ลองติจูด:
+              {{ typeof mapLongitude === 'number' ? mapLongitude.toFixed(6) : "N/A" }}
+            </v-chip>
+            <!-- <v-chip class="ma-1" color="primary">
+              <v-icon start>mdi-crosshairs-gps</v-icon>
               ละติจูด: {{ mapLatitude?.toFixed(6) || "N/A" }}
             </v-chip>
             <v-chip class="ma-1" color="primary">
               <v-icon start>mdi-crosshairs-gps</v-icon>
               ลองติจูด: {{ mapLongitude?.toFixed(6) || "N/A" }}
-            </v-chip>
+            </v-chip> -->
           </div>
         </v-card-text>
         <v-card-actions class="justify-end">
@@ -889,13 +556,8 @@
             ยกเลิก
           </v-btn>
           <!-- ปุ่มยืนยันตำแหน่ง -->
-          <v-btn
-            color="green darken-1"
-            variant="flat"
-            class="text-white ml-2"
-            @click="confirmMapLocation"
-            :disabled="!mapLatitude || !mapLongitude"
-          >
+          <v-btn color="green darken-1" variant="flat" class="text-white ml-2" @click="confirmMapLocation"
+            :disabled="!mapLatitude || !mapLongitude">
             ยืนยันตำแหน่ง
           </v-btn>
         </v-card-actions>
@@ -903,20 +565,9 @@
     </v-dialog>
 
     <!-- แถบแจ้งเตือนสถานะ -->
-    <v-snackbar
-      v-model="snackbar.show"
-      :color="snackbar.color"
-      timeout="1000"
-      location="center"
-      class="snackbar-fullscreen"
-      transition="slide-y-transition"
-    >
-      <v-icon
-        icon="mdi-alert-circle-outline"
-        class="mr-2"
-        size="large"
-        color="white"
-      />
+    <v-snackbar v-model="snackbar.show" :color="snackbar.color" timeout="1000" location="center"
+      class="snackbar-fullscreen" transition="slide-y-transition">
+      <v-icon icon="mdi-alert-circle-outline" class="mr-2" size="large" color="white" />
       {{ snackbar.text }}
     </v-snackbar>
   </v-main>
@@ -956,6 +607,22 @@ import subdistricts from "@/assets/subdistricts.json";
 
 // แสดงข้อมูลนักเรียน
 const students_Popup = ref(false);
+
+// ค่าพิกัด
+const mapLatitude = ref(null)
+const mapLongitude = ref(null)
+
+// ตัวอย่างเวลาเลือกจุดบนแผนที่
+function updateMapCoordinates(lat, lng) {
+  mapLatitude.value = Number(lat)
+  mapLongitude.value = Number(lng)
+}
+
+// // ตัวอย่างเวลาเลือกจุดบนแผนที่
+// function updateMapCoordinates(lat, lng) {
+//   mapLatitude.value = Number(lat)
+//   mapLongitude.value = Number(lng)
+// }
 
 // วันเกิด
 // เพิ่มตัวแปรเหล่านี้
@@ -1315,7 +982,7 @@ const editStudent = (student) => {
       : student.birth_date;
   }
 
-  // ⭐⭐⭐ ตั้งค่าพิกัดแผนที่ ⭐⭐⭐
+  // ตั้งค่าพิกัดแผนที่
   if (student.latitude && student.longitude) {
     mapLatitude.value = student.latitude;
     mapLongitude.value = student.longitude;
@@ -1353,8 +1020,9 @@ const dialog = ref(false); // ควบคุมการแสดงฟอร�
 const isEditing = ref(false); // ตรวจสอบว่าเป็นการแก้ไขหรือเพิ่ม
 const search = ref(""); // สำหรับค้นหาในตาราง
 const mapDialog = ref(false); // ควบคุมการแสดงแผนที่
-const mapLatitude = ref(null); // เก็บค่าละติจูดจากแผนที่
-const mapLongitude = ref(null); // เก็บค่าลองติจูดจากแผนที่
+// const mapDialog = ref(true); // ควบคุมการแสดงแผนที่
+//const mapLatitude = ref(null); // เก็บค่าละติจูดจากแผนที่
+//const mapLongitude = ref(null); // เก็บค่าลองติจูดจากแผนที่
 const mapRef = ref(null); // สำหรับโหลดแผนที่
 
 // ข้อมูลนักเรียน
@@ -1504,9 +1172,8 @@ const fetchStudents = async () => {
 
     students.value = data.map((t) => ({
       ...t,
-      full_name: `${t.prefix_name || ""}${t.first_name || ""} ${
-        t.last_name || ""
-      }`,
+      full_name: `${t.prefix_name || ""}${t.first_name || ""} ${t.last_name || ""
+        }`,
     }));
 
     // 👉 ถ้ามีนักเรียนคนแรก ให้เซ็ตที่อยู่
@@ -1526,29 +1193,35 @@ const formatGender = (gender) => {
 };
 
 // ฟังก์ชันสำหรับเปิดแผนที่เลือกตำแหน่ง
-const openMapPicker = () => {
-  // ใช้ค่าจาก record หรือค่าดีฟอลต์
-  mapLatitude.value = record.value.latitude || 13.0172384;
-  mapLongitude.value = record.value.longitude || 100.9297466;
+const openMapPicker = async () => {
+  // ✅ เปิด dialog ก่อน แล้วรอให้ DOM render เสร็จ
   mapDialog.value = true;
 
-  // รอให้ DOM อัพเดทก่อนเริ่มต้นแผนที่
-  nextTick(() => {
-    if (!map) {
-      initMap();
-    } else {
-      map.setTarget(mapRef.value);
-      map.updateSize();
+  // ✅ แปลงเป็น Number เพื่อให้แน่ใจว่าไม่ใช่ string
+  mapLatitude.value = Number(record.value.latitude) || 13.0172384;
+  mapLongitude.value = Number(record.value.longitude) || 100.9297466;
 
-      // อัพเดทตำแหน่ง marker จากค่าปัจจุบัน
-      if (mapLatitude.value && mapLongitude.value) {
-        const coordinate = fromLonLat([mapLongitude.value, mapLatitude.value]);
-        updateMarker(coordinate);
-        map.getView().setCenter(coordinate);
-        map.getView().setZoom(16); // เพิ่มการตั้งค่า zoom
-      }
+  await nextTick(); // รอให้ <v-dialog> และ <div ref="mapRef"> ถูก mount แล้ว
+
+  if (!mapRef.value) {
+    console.warn("⚠️ mapRef ยังไม่ถูก mount");
+    return;
+  }
+
+  if (!map) {
+    initMap();
+  } else {
+    map.setTarget(mapRef.value);
+    map.updateSize();
+
+    // ✅ ตรวจสอบก่อนใช้
+    if (typeof mapLatitude.value === "number" && typeof mapLongitude.value === "number") {
+      const coordinate = fromLonLat([mapLongitude.value, mapLatitude.value]);
+      updateMarker(coordinate);
+      map.getView().setCenter(coordinate);
+      map.getView().setZoom(16);
     }
-  });
+  }
 };
 
 // ฟังก์ชันเริ่มต้นแผนที่ OpenLayers
@@ -1633,7 +1306,7 @@ const confirmMapLocation = () => {
 const toggleStudent = () => {
   resetForm();
   isEditing.value = false;
-  dialog.value = true;
+  dialog.value = true; //เปิด Popup เพิ่มข้อมูล 
 };
 
 // ยืนยันการลบนักเรียน
@@ -1707,7 +1380,7 @@ const save = async () => {
         config
       );
       showSnackbar("อัปเดตข้อมูลนักเรียนสำเร็จ!", "success");
-      toggleStudent();
+      //toggleStudent();
       //resetPage();
     } else {
       await axios.post(`${API_BASE_URL}/student/insert`, payload, config);
@@ -1767,9 +1440,9 @@ const goBack = () => {
 };
 
 //รีเฟรชหน้า
-const resetPage = () => {
-  window.location.reload();
-};
+// const resetPage = () => {
+//   window.location.reload();
+// };
 </script>
 
 <style scoped>

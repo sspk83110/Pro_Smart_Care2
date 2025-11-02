@@ -2,7 +2,6 @@
   <v-app-bar app color="#3498db" dark>
     <!-- ปุ่ม toggle drawer -->
     <template #prepend>
-      <v-app-bar-nav-icon @click="$emit('toggle-drawer')" />
       <v-avatar size="40">
         <v-img src="@/assets/image/logo.png" alt="Logo" />
       </v-avatar>

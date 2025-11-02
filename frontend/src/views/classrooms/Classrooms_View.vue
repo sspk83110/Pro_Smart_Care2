@@ -44,7 +44,7 @@
 
         <v-data-table
           :headers="roomHeaders"
-          :items="rooms"
+          :items="filteredRooms"
           :items-per-page="10"
           class="custom-table custom-footer elevation-1"
         >
@@ -651,24 +651,17 @@ const schoolHeaders = [
 // Computed properties
 const isRoom = computed(() => currentTable.value === "room");
 const isLevel = computed(() => currentTable.value === "level");
-// const isSchool = computed(() => currentTable.value === "school");
 
-// const filteredRooms = computed(() => {
-//   if (!roomSearch.value) return rooms.value;
-//   return rooms.value.filter(
-//     (r) =>
-//       r.room_name.toLowerCase().includes(roomSearch.value.toLowerCase()) ||
-//       (r.teacher_name &&
-//         r.teacher_name.toLowerCase().includes(roomSearch.value.toLowerCase()))
-//   );
-// });
-
-// const filteredLevels = computed(() => {
-//   if (!form.value.school_id) return []; // ยังไม่เลือกโรงเรียน → ไม่แสดงอะไรเลย
-//   return levels.value.filter(
-//     (level) => level.school_id === form.value.school_id
-//   );
-// });
+const filteredRooms = computed(() => {
+  if (!roomSearch.value) return rooms.value;
+  const keyword = roomSearch.value.toLowerCase();
+  return rooms.value.filter((r) =>
+    (r.classroom_name && r.classroom_name.toLowerCase().includes(keyword)) ||
+    (r.class_name && r.class_name.toLowerCase().includes(keyword)) ||
+    (r.school_name && r.school_name.toLowerCase().includes(keyword)) ||
+    (r.teacher_name && r.teacher_name.toLowerCase().includes(keyword))
+  );
+});
 
 const filteredLevels = computed(() => {
   if (!levelSearch.value) return levels.value;
@@ -1014,7 +1007,7 @@ const fetchClassRoom = async () => {
     });
 
     // Log ข้อมูลที่ได้จาก backend
-    //console.log("Raw response.data from backend:", response.data);
+    console.log("Raw response.data from backend:", response.data);
 
     // แปลงข้อมูลให้มี school_name และ level_name
     rooms.value = response.data.map((room) => ({
