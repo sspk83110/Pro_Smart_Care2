@@ -7,6 +7,10 @@ from flask_jwt_extended import get_jwt
 user_bp = Blueprint("user_bp", __name__)
 
 # ✅ ดึง user info ของตัวเอง
+
+# ครู #
+
+
 @user_bp.route("/user/me", methods=["GET"])
 @jwt_required()
 def get_current_user():
@@ -34,8 +38,10 @@ def get_current_user():
     except Exception as e:
         return jsonify({"message": str(e)}), 500
     finally:
-        if cursor: cursor.close()
-        if conn: conn.close()
+        if cursor:
+            cursor.close()
+        if conn:
+            conn.close()
 
 
 # ✅ ดึงผู้ใช้ทั้งหมด (ยกเว้น admin)
@@ -47,23 +53,46 @@ def get_user_info():
     cursor = None
     try:
         conn = get_db_connection()
-        cursor = conn.cursor()
-        cursor.execute("SELECT * FROM users WHERE user_name != 'admin' ORDER BY user_id ASC")
-        users = cursor.fetchall()
-        if users:
-            columns = [col[0] for col in cursor.description]
-            result = [dict(zip(columns, row)) for row in users]
-            return jsonify({"current_user": username, "users": result}), 200
-        else:
-            return jsonify({"error": "User not found"}), 404
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
-    finally:
-        if cursor: cursor.close()
-        if conn: conn.close()
+        cursor = conn.cursor(dictionary=True)  # ✅ ให้คืนค่า dict อัตโนมัติ
 
+        sql = """
+            SELECT *
+            FROM users
+            WHERE user_name != 'admin'
+              AND teacher_id IS NOT NULL        -- ❌ ไม่เป็น NULL
+              AND TRIM(teacher_id) != ''        -- ❌ ไม่เป็นค่าว่าง
+            ORDER BY user_id ASC
+        """
+        cursor.execute(sql)
+        users = cursor.fetchall()
+
+        if not users:
+            return jsonify({
+                "current_user": username,
+                "users": [],
+                "message": "ไม่พบข้อมูลผู้ใช้ที่มี teacher_id"
+            }), 200
+
+        return jsonify({
+            "current_user": username,
+            "users": users
+        }), 200
+
+    except Exception as e:
+        import traceback
+        print("❌ Error in /user:", e)
+        print(traceback.format_exc())
+        return jsonify({"error": str(e)}), 500
+
+    finally:
+        if cursor:
+            cursor.close()
+        if conn:
+            conn.close()
 
 # ✅ เพิ่มผู้ใช้ใหม่
+
+
 @user_bp.route("/user/insert", methods=["POST"])
 @jwt_required()
 def insert_user():
@@ -71,7 +100,7 @@ def insert_user():
     claims = get_jwt()              # additional_claims ทั้งหมด
     created_by = claims["user_id"]     # ได้ user_id จาก token
 
-    print("created_by:", created_by)
+    # print("created_by:", created_by)
 
     if not request.is_json:
         return jsonify({"message": "Content-Type must be application/json"}), 415
@@ -91,7 +120,8 @@ def insert_user():
     try:
         conn = get_db_connection()
         cursor = conn.cursor()
-        cursor.execute("SELECT user_id FROM users WHERE user_name = %s", (user_name,))
+        cursor.execute(
+            "SELECT user_id FROM users WHERE user_name = %s", (user_name,))
         existing_user = cursor.fetchone()
 
         if existing_user:
@@ -106,8 +136,10 @@ def insert_user():
     except Exception as e:
         return jsonify({"message": str(e)}), 500
     finally:
-        if cursor: cursor.close()
-        if conn: conn.close()
+        if cursor:
+            cursor.close()
+        if conn:
+            conn.close()
 
 
 # ✅ อัปเดตข้อมูลผู้ใช้
@@ -117,7 +149,6 @@ def update_user(user_id):
     # username = get_jwt_identity()   # "admin"
     claims = get_jwt()              # additional_claims ทั้งหมด
     updated_by = claims["user_id"]     # ได้ user_id จาก token
-
 
     data = request.get_json()
     user_name = data.get("user_name")
@@ -145,7 +176,7 @@ def update_user(user_id):
                     updated_by = %s,
                     teacher_id = %s
                 WHERE user_id = %s
-            """, (user_name, email, hashed_password, updated_by, user_id, teacher_id))
+            """, (user_name, email, hashed_password, updated_by, teacher_id, user_id))
         else:
             cursor.execute("""
                 UPDATE users
@@ -162,8 +193,10 @@ def update_user(user_id):
     except Exception as e:
         return jsonify({"message": str(e)}), 500
     finally:
-        if cursor: cursor.close()
-        if conn: conn.close()
+        if cursor:
+            cursor.close()
+        if conn:
+            conn.close()
 
 
 # ✅ ลบผู้ใช้
@@ -181,5 +214,186 @@ def delete_user(user_id):
     except Exception as e:
         return jsonify({"message": str(e)}), 500
     finally:
-        if cursor: cursor.close()
-        if conn: conn.close()
+        if cursor:
+            cursor.close()
+        if conn:
+            conn.close()
+
+
+# ผู้ปกครอง #
+
+# ✅ ดึงผู้ใช้ทั้งหมด (ยกเว้น admin)
+@user_bp.route("/user/parents", methods=["GET"])
+@jwt_required()
+def get_parents_info():
+    username = get_jwt_identity()
+    conn = None
+    cursor = None
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor(dictionary=True)  # ✅ คืนค่าเป็น dict โดยตรง
+
+        sql = """
+            SELECT *
+            FROM users
+            WHERE user_name != 'admin'
+              AND parents_id IS NOT NULL      -- ❌ ต้องไม่เป็น NULL
+              AND TRIM(parents_id) != ''      -- ❌ ต้องไม่ใช่ช่องว่าง
+            ORDER BY user_id ASC
+        """
+        cursor.execute(sql)
+        users = cursor.fetchall()
+
+        if not users:
+            return jsonify({
+                "current_user": username,
+                "users": [],
+                "message": "ไม่พบข้อมูลผู้ใช้ที่มี parents_id"
+            }), 200
+
+        return jsonify({
+            "current_user": username,
+            "users": users
+        }), 200
+
+    except Exception as e:
+        import traceback
+        print("❌ Error in /user/parents:", e)
+        print(traceback.format_exc())
+        return jsonify({"error": str(e)}), 500
+
+    finally:
+        if cursor:
+            cursor.close()
+        if conn:
+            conn.close()
+
+
+# ✅ เพิ่มผู้ใช้ใหม่
+
+@user_bp.route("/user/parents/insert", methods=["POST"])
+@jwt_required()
+def insert_parents():
+    # username = get_jwt_identity()   # "admin"
+    claims = get_jwt()              # additional_claims ทั้งหมด
+    created_by = claims["user_id"]     # ได้ user_id จาก token
+
+    # print("created_by:", created_by)
+
+    if not request.is_json:
+        return jsonify({"message": "Content-Type must be application/json"}), 415
+
+    data = request.get_json()
+    user_name = data.get("user_name")
+    email = data.get("email")
+    password = data.get("password")
+    parents_id = data.get("parents_id")
+
+    if not user_name or not email or not password:
+        return jsonify({"message": "Missing required fields"}), 400
+
+    hashed_password = hash_password(password)
+    conn = None
+    cursor = None
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute(
+            "SELECT user_id FROM users WHERE user_name = %s", (user_name,))
+        existing_user = cursor.fetchone()
+
+        if existing_user:
+            return jsonify({"error": "Username already exists"}), 409
+
+        cursor.execute("""
+            INSERT INTO users (user_name, password, email, created_date, created_by, updated_date, parents_id)
+            VALUES (%s, %s, %s, NOW(), %s, NOW(), %s)
+        """, (user_name, hashed_password, email, created_by, parents_id))
+        conn.commit()
+        return jsonify({"message": "User created successfully"}), 201
+    except Exception as e:
+        return jsonify({"message": str(e)}), 500
+    finally:
+        if cursor:
+            cursor.close()
+        if conn:
+            conn.close()
+
+
+# ✅ อัปเดตข้อมูลผู้ใช้
+@user_bp.route("/user/parents/update/<int:user_id>", methods=["PUT"])
+@jwt_required()
+def update_parents(user_id):
+    # username = get_jwt_identity()   # "admin"
+    claims = get_jwt()              # additional_claims ทั้งหมด
+    updated_by = claims["user_id"]     # ได้ user_id จาก token
+
+    data = request.get_json()
+    user_name = data.get("user_name")
+    email = data.get("email")
+    password = data.get("password")
+    parents_id = data.get("parents_id")
+
+    # print("password", password)
+
+    if not user_name or not email:
+        return jsonify({"message": "Missing required fields"}), 400
+
+    conn = None
+    cursor = None
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+
+        if password:
+            hashed_password = hash_password(password)
+            cursor.execute("""
+                UPDATE users
+                SET user_name = %s,
+                    email = %s,
+                    password = %s,
+                    updated_date = NOW(),
+                    updated_by = %s,
+                    parents_id = %s
+                WHERE user_id = %s
+            """, (user_name, email, hashed_password, updated_by, parents_id, user_id))
+        else:
+            cursor.execute("""
+                UPDATE users
+                SET user_name = %s,
+                    email = %s,
+                    updated_date = NOW(),
+                    updated_by = %s,
+                    parents_id = %s
+                WHERE user_id = %s
+            """, (user_name, email, updated_by, parents_id, user_id))
+
+        conn.commit()
+        return jsonify({"message": "User updated successfully"}), 200
+    except Exception as e:
+        return jsonify({"message": str(e)}), 500
+    finally:
+        if cursor:
+            cursor.close()
+        if conn:
+            conn.close()
+            
+# ✅ ลบผู้ใช้
+@user_bp.route("/user/parents/delete/<int:user_id>", methods=["DELETE"])
+@jwt_required()
+def delete_parents(user_id):
+    conn = None
+    cursor = None
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute("DELETE FROM users WHERE user_id = %s", (user_id,))
+        conn.commit()
+        return jsonify({"message": "User deleted successfully"}), 200
+    except Exception as e:
+        return jsonify({"message": str(e)}), 500
+    finally:
+        if cursor:
+            cursor.close()
+        if conn:
+            conn.close()

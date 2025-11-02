@@ -2,35 +2,17 @@
   <v-main class="vector-bg center-content">
     <div class="login-container">
       <div class="logo">
-        <img
-          src="@/assets/image/logo.png"
-          alt="Company logo"
-          width="180"
-          height="180"
-        />
+        <img src="@/assets/image/logo.png" alt="Company logo" width="180" height="180" />
       </div>
 
       <h2 class="login-title">เข้าสู่ระบบ</h2>
       <form @submit.prevent="handleLogin">
         <div class="form-group">
-          <input
-            type="text"
-            id="username"
-            v-model="username"
-            required
-            placeholder="Username"
-            class="vector-input"
-          />
+          <input type="text" id="username" v-model="username" required placeholder="Username" class="vector-input" />
         </div>
         <div class="form-group">
-          <input
-            type="password"
-            id="password"
-            v-model="password"
-            required
-            placeholder="Password"
-            class="vector-input"
-          />
+          <input type="password" id="password" v-model="password" required placeholder="Password"
+            class="vector-input" />
         </div>
         <button type="submit" :disabled="loading" class="vector-button">
           {{ loading ? "Processing..." : "LOGIN" }}
@@ -40,25 +22,17 @@
       <p class="forgot-password">Forgot Password?</p>
       <p v-if="message" class="message">{{ message }}</p>
       <p>-------------</p>
-      <div
-        class="text-caption message"
-        style="
+      <div class="text-caption message" style="
           position: absolute;
           left: 50%;
           transform: translateX(-50%);
           bottom: 16px;
           color: blue;
-        "
-      >
+        ">
         &copy; 2025-{{ new Date().getFullYear() }}
         <span class="d-none d-sm-inline-block">Smartkids+Digital Life</span>
-        <a
-          class="text-decoration-none"
-          href="https://www.google.com/"
-          rel="noopener noreferrer"
-          target="_blank"
-          style="color: blue"
-        >
+        <a class="text-decoration-none" href="https://www.google.com/" rel="noopener noreferrer" target="_blank"
+          style="color: blue">
         </a>
       </div>
     </div>
@@ -114,7 +88,9 @@ const handleLogin = async () => {
       localStorage.setItem("access_token", token);
       localStorage.setItem("expiresAt", expiresAt.toString());
 
-      console.log("Login successful, token expires at:", new Date(expiresAt));
+      // console.log("access_token:", token);
+      // console.log("Login successful, expires In:", new Date(expiresIn));
+      // console.log("Login successful, expires At:", new Date(expiresAt));
 
       message.value = "เข้าสู่ระบบสำเร็จ";
 
@@ -262,6 +238,7 @@ async function getCurrentUser() {
   cursor: pointer;
   transition: background 0.2s ease;
 }
+
 .vector-button:hover {
   background: #1565c0;
 }
